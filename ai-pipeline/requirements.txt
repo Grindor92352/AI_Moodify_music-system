@@ -1,0 +1,16 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# AI Moodify — Python AI Pipeline Dependencies
+# Install with:  pip install -r requirements.txt
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Web framework — FastAPI serves the WebSocket endpoint
+fastapi==0.115.12
+
+# ASGI server — used to run FastAPI locally (uvicorn main:app --reload)
+uvicorn[standard]==0.34.0
+
+# WebSocket client — used to open a persistent raw WS connection to Hume AI
+websockets==14.2
+
+# Environment variables — loads HUME_API_KEY from .env
+python-dotenv==1.0.1

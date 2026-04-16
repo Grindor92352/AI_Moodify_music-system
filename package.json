@@ -1,0 +1,23 @@
+{
+  "name": "ai_moodify_music-system",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\" \"cmd /c cd ai-pipeline && venv\\\\Scripts\\\\python -m uvicorn main:app --reload --port 8000\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Grindor92352/AI_Moodify_music-system.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Grindor92352/AI_Moodify_music-system/issues"
+  },
+  "homepage": "https://github.com/Grindor92352/AI_Moodify_music-system#readme",
+  "description": "",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
