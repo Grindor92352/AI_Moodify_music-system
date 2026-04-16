@@ -16,8 +16,8 @@ exports.generatePlaylist = async (req, res) => {
     // Phase 1: Detect mood from facial expression via Python AI pipeline
     const dominantMood = await moodService.getMoodFromImage(image);
 
-    // Phase 2: Get curated Bollywood songs for the detected mood
-    const songs = youtubeService.getVideosForMood(dominantMood);
+    // Phase 2: Get curated Bollywood songs for the detected mood (live search)
+    const songs = await youtubeService.getVideosForMood(dominantMood);
 
     return res.json({
       mood: dominantMood,
@@ -43,7 +43,7 @@ exports.generatePlaylist = async (req, res) => {
  * Lightweight refresh: skips the camera/AI phase entirely.
  * Accepts { mood } and returns a fresh shuffled song batch.
  */
-exports.refreshPlaylist = (req, res) => {
+exports.refreshPlaylist = async (req, res) => {
   try {
     const { mood } = req.body;
 
@@ -51,7 +51,7 @@ exports.refreshPlaylist = (req, res) => {
       return res.status(400).json({ error: 'mood is required for refresh.' });
     }
 
-    const songs = youtubeService.getVideosForMood(mood);
+    const songs = await youtubeService.getVideosForMood(mood);
     console.log(`[Refresh] New batch for mood "${mood}": ${songs.map(s => s.title).join(', ')}`);
 
     return res.json({
