@@ -65,52 +65,97 @@ A curated list of 4 playable Bollywood tracks matching your mood will render on 
 Use the "Refresh Songs" button to randomize and fetch a new batch of songs for your currently detected mood without needing to turn the camera back on
 
 
-# To run the project on your local server you need to do the following steps :
+## To run the project on your local server you need to do the following steps :
 
-1. Clone the Repository
-First, the user needs to download the code to their local machine and navigate into the root workspace directory:
+## 1 — Clone the Repository
 
-git clone <your-github-repo-url>
+```bash
+git clone https://github.com/Grindor92352/AI_Moodify_music-system.git
+cd AI_Moodify_music-system
+```
 
-cd therapy-monorepo
+---
 
-2. Restore the Environment Variables
-Because we correctly configured the .gitignore file to hide your private keys, the fetched repository will only have the .env.example files. The user must create the actual .env files and inject their own API keys:
+## 2 — Environment Variables
 
-Inside the /server directory, create a .env file and add:
-PORT=5000
-YOUTUBE_API_KEY=their_youtube_api_key_here
+The Python pipeline needs a Hume AI API key. The Node.js server reads it via the pipeline's WebSocket connection — **no key is needed directly in the server**.
 
-Inside the /ai-pipeline directory, create a .env file and add:
-HUME_API_KEY=their_hume_api_key_here
+### Get a Hume AI API key
+1. Sign up at [platform.hume.ai](https://platform.hume.ai)
+2. Go to **Settings → API Keys → New Key**
+3. Copy the key
 
-3. Initialize the Python Virtual Environment
-Because the concurrently start script in Windows relies on the specific venv\\Scripts\\uvicorn path we configured, the user must build the Python environment identically:
+### Create the `.env` file
 
-cd ai-pipeline
+```bash
+# From the repo root:
+cp server/.env.example server/.env
+```
 
-python -m venv venv
+Open `server/.env` and fill in your key:
 
-Activate it (venv\Scripts\activate on Windows or source venv/bin/activate on Mac/Linux)
+```env
+HUME_API_KEY=your_actual_hume_api_key_here
+```
 
-pip install fastapi uvicorn python-dotenv hume
+> **Note:** The Python pipeline reads this key directly from `ai-pipeline/.env` **or** from `server/.env` (both are checked). The simplest setup is a single `.env` inside `server/` — the pipeline's `load_dotenv()` call walks up the directory tree automatically.
 
-cd.. (to return to the root workspace)
+---
 
-4. Install the Node.js and React Dependencies
-From the root directory, the user must install all the package dependencies for the Express backend and the Vite frontend:
+## 3 — Install Node.js Dependencies
 
+```bash
+# Install root-level dev tools (concurrently)
 npm install
 
-5. Launch the Application
-With the environments built and the keys in place, the user can utilize the global script to launch the React frontend (port 3000), the Node backend (port 5000), and the Python API (port 8000) simultaneously:
+# Install the Express server dependencies
+npm install --prefix server
 
+# Install the React client dependencies
+npm install --prefix client
+```
+
+---
+
+## 4 — Set Up the Python Virtual Environment
+
+```bash
+cd ai-pipeline
+
+# Create a virtual environment
+python -m venv venv
+
+# Activate it
+# Windows:
+venv\Scripts\activate
+# macOS / Linux:
+source venv/bin/activate
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Return to root
+cd ..
+```
+
+> ⚠️ The `venv/` folder must be named exactly **`venv`** and located inside `ai-pipeline/`. The root `npm run dev` script launches the Python process using the path `ai-pipeline\venv\Scripts\python` on Windows.
+
+---
+
+## 5 — Run the Full Stack
+
+From the **repo root**, run:
+
+```bash
 npm run dev
+```
 
-6. Run the Hardware and UI
+This single command starts all three services in parallel using `concurrently`:
 
-Open a web browser to http://localhost:3000.
+| Terminal label | Service | URL |
+|---------------|---------|-----|
+| `[0]` | React frontend (Vite) | http://localhost:3000 |
+| `[1]` | Express backend | http://localhost:5000 |
+| `[2]` | Python AI pipeline | http://localhost:8000 |
 
-When prompted, grant the browser permission to access the webcam.
-
-Click the purple "Detect My Mood" button visible in the UI. Just like in your final screenshots, the system will capture the frame, shut off the camera to return to "Camera idle", display the dominant emotion (e.g., "Fatigue", "Anger"), and natively render the 4 playable Bollywood YouTube tracks.
+Open **http://localhost:3000** in your browser.
