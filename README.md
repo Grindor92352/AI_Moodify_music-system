@@ -63,3 +63,54 @@ The AI pipeline will analyze your expression and display your dominant mood.
 A curated list of 4 playable Bollywood tracks matching your mood will render on the screen.
 
 Use the "Refresh Songs" button to randomize and fetch a new batch of songs for your currently detected mood without needing to turn the camera back on
+
+
+# To run the project on your local server you need to do the following steps :
+
+1. Clone the Repository
+First, the user needs to download the code to their local machine and navigate into the root workspace directory:
+
+git clone <your-github-repo-url>
+
+cd therapy-monorepo
+
+2. Restore the Environment Variables
+Because we correctly configured the .gitignore file to hide your private keys, the fetched repository will only have the .env.example files. The user must create the actual .env files and inject their own API keys:
+
+Inside the /server directory, create a .env file and add:
+PORT=5000
+YOUTUBE_API_KEY=their_youtube_api_key_here
+
+Inside the /ai-pipeline directory, create a .env file and add:
+HUME_API_KEY=their_hume_api_key_here
+
+3. Initialize the Python Virtual Environment
+Because the concurrently start script in Windows relies on the specific venv\\Scripts\\uvicorn path we configured, the user must build the Python environment identically:
+
+cd ai-pipeline
+
+python -m venv venv
+
+Activate it (venv\Scripts\activate on Windows or source venv/bin/activate on Mac/Linux)
+
+pip install fastapi uvicorn python-dotenv hume
+
+cd.. (to return to the root workspace)
+
+4. Install the Node.js and React Dependencies
+From the root directory, the user must install all the package dependencies for the Express backend and the Vite frontend:
+
+npm install
+
+5. Launch the Application
+With the environments built and the keys in place, the user can utilize the global script to launch the React frontend (port 3000), the Node backend (port 5000), and the Python API (port 8000) simultaneously:
+
+npm run dev
+
+6. Run the Hardware and UI
+
+Open a web browser to http://localhost:3000.
+
+When prompted, grant the browser permission to access the webcam.
+
+Click the purple "Detect My Mood" button visible in the UI. Just like in your final screenshots, the system will capture the frame, shut off the camera to return to "Camera idle", display the dominant emotion (e.g., "Fatigue", "Anger"), and natively render the 4 playable Bollywood YouTube tracks.
