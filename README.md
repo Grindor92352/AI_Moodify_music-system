@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🎵 AI Moodify — Music Therapy System
 
 An AI-powered music therapy web app that detects your facial emotion in real time and curates a personalised Bollywood playlist to match or lift your mood.
@@ -47,6 +48,76 @@ Make sure the following are installed on your machine before you begin:
 | **Git** | any | `git --version` |
 
 ---
+=======
+Moodify Therapy: AI-Based Music and Mood Therapy System
+
+Overview:
+Moodify Therapy is a full-stack web application designed for real-time emotional analysis and adaptive Bollywood music curation.
+The system captures a frame from the user's webcam upon a manual button trigger, analyzes their facial expression to determine their
+current emotional state, and dynamically recommends therapeutic Bollywood tracks to either elevate or ground their mood.
+
+Features
+  -- Real-Time Emotion Detection: Utilizes Hume AI's expression measurement models to analyze 48 dimensions of emotional expression from facial movements.
+
+  -- Therapeutic Mood Mapping: Aggregates granular emotion scores into 5 core proxy states: Happiness, Sadness, Anger, Stress/Anxiety, and Fatigue.
+
+  -- Dynamic Music Curation: Maps the detected mood to specific Bollywood music search queries using the YouTube Data API v3.
+
+  -- Playable UI: Embeds playable YouTube video iframes directly into the dashboard for an immediate, seamless listening experience.
+
+  -- Secure API Architecture: Environment variables and API keys are securely managed in the Node.js backend, ensuring sensitive data never reaches the client-side React application.
+
+Technology Stack :
+ # Frontend: React (Vite), TypeScript, Tailwind CSS
+
+ # Backend Orchestration: Node.js, Express, Axios
+
+ # AI Inference Pipeline: Python, FastAPI, Hume AI Python SDK
+
+ # External APIs: YouTube Data API v3, Hume AI Expression Measurement API
+
+Setup and Installation:
+1. Prerequisites
+Node.js (v16 or higher)
+
+Python (v3.10 or higher)
+
+API Keys for Hume AI and Google Cloud (YouTube Data API v3)
+
+2. Environment Variables
+Create a .env file in both the /server and /ai-pipeline directories.
+
+Security Note: These files are explicitly included in the .gitignore file to prevent your private API keys from being uploaded to GitHub or exposed to the client side.
+
+/server/.env
+
+Code snippet
+PORT=5000
+YOUTUBE_API_KEY=your_youtube_data_api_v3_key_here
+/ai-pipeline/.env
+
+Code snippet
+HUME_API_KEY=your_hume_ai_api_key_here
+3. Running the Application
+The project is structured as a monorepo. From the root directory, install the global dependencies and run the start script. This utilizes the concurrently package to launch the React frontend, Node.js backend, and Python inference pipeline simultaneously:
+
+Bash
+npm install
+npm run dev
+4. Usage
+Allow browser permissions for webcam access.
+
+Click the "Detect My Mood" button. The camera will briefly activate, capture a single frame after a short delay (to adjust lighting/focus), and then immediately shut down.
+
+The AI pipeline will analyze your expression and display your dominant mood.
+
+A curated list of 4 playable Bollywood tracks matching your mood will render on the screen.
+
+Use the "Refresh Songs" button to randomize and fetch a new batch of songs for your currently detected mood without needing to turn the camera back on
+
+
+## To run the project on your local server you need to do the following steps :
+>>>>>>> e5b90fd7c792dc63fa5a5d9d1d59f597fe0c3437
 
 ## 1 — Clone the Repository
 
@@ -59,11 +130,20 @@ cd AI_Moodify_music-system
 
 ## 2 — Environment Variables
 
+<<<<<<< HEAD
 The Python pipeline needs a Hume AI API key, and the Node.js server needs a YouTube Data API v3 key.
 
 ### Get the API keys
 1. **Hume AI**: Sign up at [platform.hume.ai](https://platform.hume.ai) → Settings → API Keys.
 2. **YouTube**: Go to [Google Cloud Console](https://console.cloud.google.com/) → Library → Enable "YouTube Data API v3" → Credentials → Create API Key.
+=======
+The Python pipeline needs a Hume AI API key. The Node.js server reads it via the pipeline's WebSocket connection — **no key is needed directly in the server**.
+
+### Get a Hume AI API key
+1. Sign up at [platform.hume.ai](https://platform.hume.ai)
+2. Go to **Settings → API Keys → New Key**
+3. Copy the key
+>>>>>>> e5b90fd7c792dc63fa5a5d9d1d59f597fe0c3437
 
 ### Create the `.env` file
 
@@ -72,11 +152,18 @@ The Python pipeline needs a Hume AI API key, and the Node.js server needs a YouT
 cp server/.env.example server/.env
 ```
 
+<<<<<<< HEAD
 Open `server/.env` and fill in your keys:
 
 ```env
 HUME_API_KEY=your_hume_api_key_here
 YOUTUBE_API_KEY=your_youtube_api_key_here
+=======
+Open `server/.env` and fill in your key:
+
+```env
+HUME_API_KEY=your_actual_hume_api_key_here
+>>>>>>> e5b90fd7c792dc63fa5a5d9d1d59f597fe0c3437
 ```
 
 > **Note:** The Python pipeline reads this key directly from `ai-pipeline/.env` **or** from `server/.env` (both are checked). The simplest setup is a single `.env` inside `server/` — the pipeline's `load_dotenv()` call walks up the directory tree automatically.
@@ -140,6 +227,7 @@ This single command starts all three services in parallel using `concurrently`:
 | `[2]` | Python AI pipeline | http://localhost:8000 |
 
 Open **http://localhost:3000** in your browser.
+<<<<<<< HEAD
 
 ---
 
@@ -265,3 +353,5 @@ uvicorn main:app --reload --port 8000
 2. Keep the `.env` out of commits — it is git-ignored.
 3. The `venv/` folder is also git-ignored — every collaborator creates their own.
 4. Test all three services are running before submitting a PR.
+=======
+>>>>>>> e5b90fd7c792dc63fa5a5d9d1d59f597fe0c3437
