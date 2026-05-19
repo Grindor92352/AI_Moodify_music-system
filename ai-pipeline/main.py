@@ -1,17 +1,22 @@
-import json
-import os
-import asyncio
-import traceback
-import base64
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
-import websockets
+from pydantic import BaseModel
+import cv2
+import numpy as np
+import base64
+import anyio
+from tensorflow.keras.models import model_from_json
+import traceback
 
-load_dotenv()
+app = FastAPI(title="AI Moodify - Local Emotion Detection")
 
-app = FastAPI(title="AI Moodify - Emotion Detection Pipeline")
+@app.on_event("startup")
+async def startup_event():
+    # Boost threadpool size for 100 concurrent users performing synchronous OpenCV/Keras operations
+    limiter = anyio.to_thread.current_default_thread_limiter()
+    limiter.total_tokens = 100
 
+# Keep the CORS middleware so the frontend can connect
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -20,133 +25,107 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ─── Hume 48-emotion → 5 proxy composite buckets ──────────────────────────
-# Each composite state aggregates semantically related Hume emotions.
-# Highest aggregated score wins → avoids single-emotion false positives.
+# 1. Load your custom CNN Model Architecture and Weights
+with open("model_arch.json", "r") as json_file:
+    loaded_model_json = json_file.read()
+model = model_from_json(loaded_model_json)
+model.load_weights("model.weights.h5")
 
-EMOTION_BUCKETS = {
-    "Happiness":  ["Joy", "Amusement", "Satisfaction", "Excitement", "Contentment", "Elation", "Enthusiasm"],
-    "Fatigue":    ["Tiredness", "Boredom", "Calmness"],
-    "Sadness":    ["Sadness", "Disappointment", "Grief", "Nostalgia", "Sympathy"],
-    "Stress":     ["Anxiety", "Distress", "Confusion", "Nervousness", "Fear", "Worry"],
-    "Anger":      ["Anger", "Annoyance", "Contempt", "Disgust", "Frustration"],
+# 2. Load OpenCV's built-in Face Detector
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+# 3. Map FER2013 baseline emotions to your Bollywood Music logic
+emotion_mapping = {
+    0: "Anger",
+    1: "Anger",
+    2: "Anxiety",
+    3: "Happiness",
+    4: "Sadness",
+    5: "Happiness",
+    6: "Fatigue" # Neutral triggers relaxing music
 }
 
-def aggregate_emotions(emotions: list) -> dict:
-    """
-    Build a score-map from the Hume prediction list, then
-    sum scores by composite bucket. Returns { "Happiness": 0.42, ... }.
-    """
-    # Build a flat lookup: { "Joy": 0.81, "Anxiety": 0.12, ... }
-    score_map = {e["name"]: e["score"] for e in emotions}
+class FrameRequest(BaseModel):
+    image_base64: str
 
-    composite = {}
-    for proxy_name, hume_names in EMOTION_BUCKETS.items():
-        composite[proxy_name] = sum(score_map.get(h, 0.0) for h in hume_names)
+class AuthRequest(BaseModel):
+    email: str
+    password: str
 
-    return composite
+@app.post("/signup")
+def signup(payload: AuthRequest):
+    return {"message": "User created successfully", "token": "mock_jwt_token"}
 
+@app.post("/login")
+def login(payload: AuthRequest):
+    return {"token": "mock_jwt_token"}
 
-@app.websocket("/ws/analyze-frame")
-async def analyze_frame_ws(websocket: WebSocket):
-    """
-    WebSocket endpoint for low-latency facial expression analysis.
-    Accepts base64 image payloads, forwards to Hume Streaming API,
-    aggregates scores across 5 composite mood buckets, and returns
-    the dominant mood with confidence.
-    """
-    await websocket.accept()
-
-    api_key = os.getenv("HUME_API_KEY")
-    if not api_key:
-        await websocket.send_json({"error": "HUME_API_KEY is not set in environment."})
-        await websocket.close()
-        return
-
+# Use standard `def` (not async) so FastAPI runs this in a separate thread pool!
+@app.post("/analyze-frame")
+def analyze_frame(payload: FrameRequest):
     try:
-        uri = f"wss://api.hume.ai/v0/stream/models?apikey={api_key}"
-        async with websockets.connect(uri) as hume_socket:
-            while True:
-                # Receive frame from Node.js client
-                payload = await websocket.receive_text()
-
-                # Strip data URI prefix if present
-                if "base64," in payload:
-                    payload = payload.split("base64,")[1]
-
-                if not payload.strip():
-                    await websocket.send_json({"error": "Empty frame payload received."})
-                    continue
-
-                # Build Hume request
-                hume_request = {
-                    "data": payload,
-                    "models": {"face": {}}
-                }
-
-                try:
-                    await hume_socket.send(json.dumps(hume_request))
-
-                    # Await Hume prediction — 8 second timeout (up from 5s)
-                    result_string = await asyncio.wait_for(
-                        hume_socket.recv(), timeout=8.0
-                    )
-                    result_dict = json.loads(result_string)
-
-                    # Check for Hume-level errors
-                    if "error" in result_dict:
-                        await websocket.send_json({"error": result_dict["error"]})
-                        continue
-
-                    # Parse predictions
-                    predictions = result_dict.get("face", {}).get("predictions", [])
-
-                    if not predictions:
-                        await websocket.send_json({"error": "No face detected in frame"})
-                        continue
-
-                    emotions = predictions[0].get("emotions", [])
-
-                    if not emotions:
-                        await websocket.send_json({"error": "No emotion data in prediction"})
-                        continue
-
-                    # ── Core fix: aggregate into 5 composite buckets ──────────
-                    composite_scores = aggregate_emotions(emotions)
-
-                    # Print all scores for debugging in the terminal
-                    print("\n[Hume] Composite scores:")
-                    for k, v in sorted(composite_scores.items(), key=lambda x: -x[1]):
-                        bar = "█" * int(v * 20)
-                        print(f"  {k:<12} {v:.3f}  {bar}")
-
-                    # Pick the highest-scoring composite mood
-                    dominant_mood = max(composite_scores, key=composite_scores.get)
-                    confidence = composite_scores[dominant_mood]
-
-                    print(f"[Hume] → Dominant mood: {dominant_mood} (score: {confidence:.3f})\n")
-
-                    await websocket.send_json({
-                        "dominant_mood": dominant_mood,
-                        "confidence": round(float(confidence), 4),
-                        "all_scores": {k: round(float(v), 4) for k, v in composite_scores.items()}
-                    })
-
-                except asyncio.TimeoutError:
-                    await websocket.send_json({"error": "Hume API timed out. Check network or API key."})
-                except json.JSONDecodeError:
-                    await websocket.send_json({"error": "Invalid JSON from Hume response."})
-                except Exception as e:
-                    traceback.print_exc()
-                    await websocket.send_json({"error": f"Pipeline error: {repr(e)}"})
-
-    except WebSocketDisconnect:
-        pass  # Normal client disconnect
-    except Exception as e:
-        print(f"[Fatal] WebSocket error: {e}")
-        traceback.print_exc()
+        base64_string = payload.image_base64
+        
+        # Strip the metadata prefix if it exists
+        encoded_data = base64_string.split(',')[1] if ',' in base64_string else base64_string
+        
+        # Safely attempt to decode the base64 string
         try:
-            await websocket.send_json({"error": f"Fatal connection error: {str(e)}"})
-            await websocket.close()
-        except Exception:
-            pass
+            nparr = np.frombuffer(base64.b64decode(encoded_data), np.uint8)
+        except Exception as e:
+            return {"error": f"Base64 decoding failed: {str(e)}"}
+        
+        # Convert directly to Grayscale
+        img = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
+        
+        # Catch OpenCV's silent failure if the image data is corrupted
+        if img is None:
+            return {"error": "OpenCV could not decode the image bytes."}
+        
+        # Detect the face in the image
+        faces = face_cascade.detectMultiScale(img, scaleFactor=1.3, minNeighbors=5)
+        
+        # If no face is found, return a relaxing fallback mood
+        if len(faces) == 0:
+            return {"dominant_mood": "Fatigue"}
+            
+        # Process the first detected face safely
+        (x, y, w, h) = faces[0]
+        
+        # Add a slight padding to the bounding box to capture the whole face
+        padding = int(w * 0.1) # 10% padding
+        y1 = max(0, y - padding)
+        y2 = min(img.shape[0], y + h + padding)
+        x1 = max(0, x - padding)
+        x2 = min(img.shape[1], x + w + padding)
+        
+        roi_gray = img[y1:y2, x1:x2]
+        
+        # Histogram Equalization: This fixes bad lighting/shadows which often confuse the CNN into predicting 'Sadness'
+        roi_gray = cv2.equalizeHist(roi_gray)
+        
+        # Resize to 48x48 pixels to match the CNN input shape
+        roi_gray = cv2.resize(roi_gray, (48, 48))
+        
+        # Normalize pixel values between 0 and 1
+        roi_gray = roi_gray / 255.0
+        
+        # Reshape to match the Keras input format: (batch_size, height, width, channels)
+        roi_gray = np.reshape(roi_gray, (1, 48, 48, 1))
+        
+        # Predict the emotion
+        prediction = model.predict(roi_gray, verbose=0) 
+        
+        # Log the raw probabilities to help debug bias
+        emotions = ["Angry", "Disgust", "Fear", "Happy", "Sad", "Surprise", "Neutral"]
+        probs = {emotions[i]: float(prediction[0][i]) for i in range(7)}
+        print(f"Raw CNN Probabilities: {probs}")
+        
+        max_index = int(np.argmax(prediction))
+        final_mood = emotion_mapping.get(max_index, "Happiness")
+        
+        return {"dominant_mood": final_mood}
+        
+    except Exception as e:
+        print(traceback.format_exc())
+        return {"error": str(e)}

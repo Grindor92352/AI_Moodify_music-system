@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\" \"cmd /c cd ai-pipeline && venv\\\\Scripts\\\\python -m uvicorn main:app --reload --port 8000\""
+    "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\" \"cd ai-pipeline && .\\venv\\Scripts\\python -m uvicorn main:app --reload --port 8000\""
   },
   "repository": {
     "type": "git",

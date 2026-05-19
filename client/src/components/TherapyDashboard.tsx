@@ -116,16 +116,30 @@ const TherapyDashboard: React.FC = () => {
       stopCamera();
       setStatusMsg('Analyzing your mood with AI…');
 
-      // Step E: Send to Node backend
-      const res = await axios.post<MusicResponse>(`${API}/analyze`, { image: base64Image });
-      const { mood, count } = applyMusicResponse(res.data);
+      // Step E: Send directly to Python backend
+      const pyRes = await axios.post('http://localhost:8000/analyze-frame', { 
+        image_base64: base64Image 
+      });
+
+      if (pyRes.data.error) {
+        throw new Error(pyRes.data.error);
+      }
+
+      const detectedMood = pyRes.data.dominant_mood;
+      if (!detectedMood) {
+        throw new Error('No mood detected from image.');
+      }
+
+      setStatusMsg(`Detected: ${detectedMood}. Fetching playlist…`);
+
+      // Step F: Fetch songs from Node backend for the detected mood
+      const res = await axios.post<MusicResponse>(`${API}/refresh`, { mood: detectedMood });
+      const { count } = applyMusicResponse(res.data, detectedMood);
 
       setStatusMsg(
         count > 0
-          ? `Detected: ${mood} ✓ — Playlist loaded!`
-          : mood
-            ? `Detected: ${mood}. No tracks returned — keeping current playlist.`
-            : 'No face detected. Try again in better lighting.'
+          ? `Detected: ${detectedMood} ✓ — Playlist loaded!`
+          : `Detected: ${detectedMood}. No tracks returned — keeping current playlist.`
       );
     } catch (err: unknown) {
       const msg = axios.isAxiosError(err)

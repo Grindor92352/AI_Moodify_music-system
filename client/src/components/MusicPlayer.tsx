@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Play, BookmarkPlus, BookmarkCheck, X } from 'lucide-react';
 
 interface Song {
   videoId: string;
@@ -12,120 +13,116 @@ interface MusicPlayerProps {
 }
 
 const MusicPlayer: React.FC<MusicPlayerProps> = ({ videoIds, songs }) => {
-  const [activatedIds, setActivatedIds] = useState<Set<string>>(new Set());
+  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
-  // Build display list — prefer rich song objects, fall back to plain IDs
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem('moodify_saved_songs') || '[]');
+    setSavedIds(new Set(saved.map((s: any) => s.videoId)));
+  }, []);
+
   const displayList: Song[] = songs && songs.length > 0
     ? songs
     : videoIds.map(id => ({ videoId: id, title: 'Bollywood Track', artist: 'Various Artists' }));
 
-  const activate = (videoId: string) => {
-    setActivatedIds(prev => new Set([...prev, videoId]));
+  const toggleSave = (song: Song) => {
+    const isSaved = savedIds.has(song.videoId);
+    let savedList = JSON.parse(localStorage.getItem('moodify_saved_songs') || '[]');
+    
+    if (isSaved) {
+      savedList = savedList.filter((s: any) => s.videoId !== song.videoId);
+      setSavedIds(prev => { const next = new Set(prev); next.delete(song.videoId); return next; });
+    } else {
+      savedList.push(song);
+      setSavedIds(prev => new Set([...prev, song.videoId]));
+    }
+    localStorage.setItem('moodify_saved_songs', JSON.stringify(savedList));
   };
 
   if (!displayList || displayList.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-center px-4 py-12 rounded-2xl border-2 border-dashed border-neutral-800/50 bg-neutral-900/20">
-        <div className="w-16 h-16 rounded-full bg-neutral-800/50 flex items-center justify-center mb-6">
-          <svg className="w-8 h-8 text-neutral-500" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-          </svg>
-        </div>
-        <h3 className="text-xl font-semibold text-neutral-300 mb-2">Awaiting Analysis</h3>
-        <p className="text-neutral-500 text-sm max-w-sm leading-relaxed">
-          Click <span className="text-purple-400 font-medium">Detect My Mood</span> and face the camera. The AI will detect your emotion and load personalized Bollywood videos automatically.
-        </p>
+      <div className="flex flex-col items-center justify-center p-10 bg-neutral-900/30 rounded-2xl border border-dashed border-neutral-800 text-neutral-500">
+        <p>No tracks available.</p>
       </div>
     );
   }
 
+  const handlePlay = (song: Song) => {
+    setActiveVideoId(song.videoId);
+    // Add to recently played history
+    try {
+      const recentList = JSON.parse(localStorage.getItem('moodify_recently_played') || '[]');
+      const filteredList = recentList.filter((s: any) => s.videoId !== song.videoId);
+      filteredList.unshift(song);
+      localStorage.setItem('moodify_recently_played', JSON.stringify(filteredList.slice(0, 50)));
+    } catch (e) {
+      console.error('Failed to save recently played', e);
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-5 pb-8">
-      {displayList.map((song, index) => {
-        const { videoId, title, artist } = song;
-        const isActive = activatedIds.has(videoId);
-        const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
-        const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
-        const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    <div className="w-full">
+      <div className="flex flex-col gap-2">
+        {displayList.map((song, index) => {
+          const isSaved = savedIds.has(song.videoId);
+          const isPlaying = activeVideoId === song.videoId;
+          const thumbnailUrl = `https://img.youtube.com/vi/${song.videoId}/default.jpg`;
 
-        return (
-          <div
-            key={`${videoId}-${index}`}
-            className="group relative transition-all duration-300 hover:scale-[1.005] hover:-translate-y-0.5"
-          >
-            {/* Hover glow */}
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-2xl blur-md opacity-0 group-hover:opacity-100 transition duration-500 pointer-events-none" />
-
-            <div className="relative bg-[#0f0f0f] rounded-[16px] overflow-hidden border border-neutral-800 shadow-2xl group-hover:border-neutral-600 transition-colors duration-300">
-              {isActive ? (
-                /* ── Active: Play the YouTube embed ── */
-                <iframe
-                  src={embedUrl}
-                  width="100%"
-                  height="220"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  className="border-0 block w-full"
-                  title={title}
-                />
-              ) : (
-                /* ── Idle: Thumbnail card with click-to-load ── */
-                <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
-                  {/* Thumbnail */}
-                  <img
-                    src={thumbnailUrl}
-                    alt={title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        'https://via.placeholder.com/480x270/111111/444444?text=Bollywood+Music';
-                    }}
-                  />
-
-                  {/* Dark overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-
-                  {/* Play button — clicking this loads the iframe */}
-                  <button
-                    onClick={() => activate(videoId)}
-                    className="absolute inset-0 flex flex-col items-center justify-center gap-3 group/btn"
-                    aria-label={`Play ${title}`}
-                  >
-                    <div className="w-16 h-16 rounded-full bg-red-600/90 group-hover/btn:bg-red-500 flex items-center justify-center shadow-2xl transition-all duration-200 group-hover/btn:scale-110">
-                      <svg className="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
-                    </div>
-                    <span className="text-white/80 text-xs font-medium tracking-wider uppercase">Click to Play</span>
-                  </button>
-
-                  {/* Song info bar at bottom */}
-                  <div className="absolute bottom-0 left-0 right-0 px-4 py-3 flex items-end justify-between">
-                    <div className="mr-3 min-w-0">
-                      <p className="text-white font-semibold text-sm leading-tight truncate drop-shadow-lg">{title}</p>
-                      <p className="text-neutral-300 text-xs truncate drop-shadow">{artist}</p>
-                    </div>
-                    {/* Open in YouTube link */}
-                    <a
-                      href={youtubeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={e => e.stopPropagation()}
-                      className="flex-shrink-0 flex items-center gap-1 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/10 text-white text-[10px] font-bold px-2 py-1 rounded-full transition-all duration-200"
-                      aria-label="Watch on YouTube"
-                    >
-                      <svg className="w-3 h-3 text-red-400" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-                      </svg>
-                      YouTube
-                    </a>
-                  </div>
+          return (
+            <div 
+              key={`${song.videoId}-${index}`}
+              className={`group flex items-center p-3 rounded-2xl transition-all border ${isPlaying ? 'bg-purple-600/10 border-purple-500/30' : 'bg-transparent border-transparent hover:bg-white/5'}`}
+            >
+              <div className="w-10 text-center text-neutral-500 font-medium text-sm cursor-pointer" onClick={() => handlePlay(song)}>
+                {isPlaying ? <Play size={16} className="mx-auto text-purple-400 animate-pulse" /> : (index + 1).toString().padStart(2, '0')}
+              </div>
+              
+              <div className="w-12 h-12 rounded-lg overflow-hidden bg-neutral-800 ml-2 mr-4 flex-shrink-0 relative cursor-pointer" onClick={() => handlePlay(song)}>
+                <img src={thumbnailUrl} alt={song.title} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                  <Play size={20} className="text-white ml-1" />
                 </div>
-              )}
+              </div>
+
+              <div className="flex-1 min-w-0 pr-4">
+                <h4 className={`font-semibold truncate ${isPlaying ? 'text-purple-400' : 'text-white'}`}>{song.title}</h4>
+                <p className="text-neutral-400 text-xs truncate">{song.artist}</p>
+              </div>
+
+              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                  onClick={() => toggleSave(song)}
+                  className={`p-2 rounded-lg transition-colors ${isSaved ? 'text-purple-400 bg-purple-400/10' : 'text-neutral-400 hover:text-white hover:bg-neutral-800'}`}
+                  title="Save to Library"
+                >
+                  {isSaved ? <BookmarkCheck size={18} /> : <BookmarkPlus size={18} />}
+                </button>
+              </div>
             </div>
+          );
+        })}
+      </div>
+
+      {activeVideoId && (
+        <div className="fixed bottom-6 right-6 w-80 bg-neutral-900 border border-neutral-700 p-3 rounded-2xl shadow-2xl z-50 animate-in slide-in-from-bottom-5">
+          <div className="flex items-center justify-between mb-3 px-1">
+            <div className="flex items-center gap-2 text-purple-400 text-sm font-bold">
+              <Play size={14} className="animate-pulse" /> Now Playing
+            </div>
+            <button onClick={() => setActiveVideoId(null)} className="text-neutral-500 hover:text-white transition-colors">
+              <X size={18} />
+            </button>
           </div>
-        );
-      })}
+          <div className="w-full aspect-video rounded-xl overflow-hidden bg-black">
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${activeVideoId}?autoplay=1&modestbranding=1&showinfo=0`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full border-0"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

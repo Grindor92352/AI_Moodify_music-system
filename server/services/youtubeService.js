@@ -87,7 +87,7 @@ exports.getVideosForMood = async (dominantMood) => {
   }
 
   try {
-    const query = MOOD_QUERIES[key] || MOOD_QUERIES['happiness'];
+    const query = MOOD_QUERIES[key] || `${dominantMood} song official audio -shorts`;
     
     console.log(`[YouTube API] Searching live for: "${query}"`);
 
