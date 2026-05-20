@@ -102,6 +102,7 @@ cd ..
 
 ## ▶️ Running the Application
 
+### Option A: Running Locally (Development)
 From the root directory, start all three services (React, Node.js, Python) simultaneously using concurrently:
 
 ```bash
@@ -109,6 +110,19 @@ npm run dev
 ```
 
 The application will be available at **http://localhost:3000**.
+
+### Option B: Running with Docker (Recommended)
+You can run the entire stack (React Nginx build, Node, FastAPI AI pipeline) containerized in a single command.
+
+1. Make sure you have created and configured the `server/.env` file with your credentials (database connection string, YouTube API key, JWT secret, and cluster setting).
+2. Build and start the services from the root directory:
+   ```bash
+   docker-compose up --build
+   ```
+3. Access the app:
+   * **Frontend**: `http://localhost:3000`
+   * **Backend API**: `http://localhost:5000`
+   * **AI Pipeline**: `http://localhost:8000`
 
 ---
 

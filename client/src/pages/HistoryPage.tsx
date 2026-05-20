@@ -52,9 +52,9 @@ const HistoryPage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#050505] text-white">
+    <div className="flex h-screen overflow-hidden bg-[#050505] text-white">
       <Sidebar />
-      <main className="flex-1 p-8 overflow-y-auto custom-scrollbar">
+      <main className="min-h-0 flex-1 p-8 overflow-y-auto custom-scrollbar">
 
         {/* Header */}
         <div className="max-w-4xl mx-auto">
@@ -89,7 +89,7 @@ const HistoryPage: React.FC = () => {
                 <Inbox size={28} className="text-neutral-600" />
               </div>
               <h2 className="text-xl font-bold mb-2">No sessions yet</h2>
-              <p className="text-neutral-500 text-sm max-w-xs mx-auto">Go to your Profile, detect your mood, and your first session will appear here.</p>
+              <p className="text-neutral-500 text-sm max-w-xs mx-auto">Go to your Dashboard, detect your mood, and your first session will appear here.</p>
             </div>
           )}
 

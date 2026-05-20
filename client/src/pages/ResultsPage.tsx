@@ -33,21 +33,21 @@ const ResultsPage: React.FC = () => {
   };
 
   if (!mood) {
-    return <Navigate to="/profile" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
-    <div className="flex min-h-screen bg-[#050505] selection:bg-white/20 animate-fade-in-up">
+    <div className="flex h-screen overflow-hidden bg-[#050505] selection:bg-white/20 animate-fade-in-up">
       <Sidebar />
-      <main className="flex-1 p-10 flex flex-col items-center">
+      <main className="min-h-0 flex-1 p-10 flex flex-col items-center overflow-y-auto custom-scrollbar">
         
         <header className="w-full max-w-5xl mb-8 flex items-center">
           <Link to="/dashboard" className="p-2 mr-4 bg-neutral-900 border border-neutral-800 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800 transition-all">
             <ArrowLeft size={24} />
           </Link>
           <div>
-            <h1 className="text-3xl font-extrabold text-white">{image ? 'Analysis Complete' : 'Your Playlist'}</h1>
-            <p className="text-neutral-400 text-sm mt-1">{image ? 'Here is what our AI discovered.' : 'Enjoy these curated tracks.'}</p>
+            <h1 className="text-3xl font-extrabold text-white">{image ? 'Analysis Complete' : mood}</h1>
+            <p className="text-neutral-400 text-sm mt-1">{image ? 'Here is what our AI discovered.' : 'Playlist curated from your dashboard.'}</p>
           </div>
         </header>
 
@@ -83,7 +83,7 @@ const ResultsPage: React.FC = () => {
             <div className="bg-[#0a0a0a] border border-neutral-800 rounded-3xl p-8 shadow-xl h-full flex flex-col">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                  Recommended Tracks
+                  {image ? 'Recommended Tracks' : `${mood} Tracks`}
                 </h2>
                 <div className="flex items-center gap-3">
                   <button 

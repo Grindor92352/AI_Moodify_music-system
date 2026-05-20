@@ -25,9 +25,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import json
+
 # 1. Load your custom CNN Model Architecture and Weights
 with open("model_arch.json", "r") as json_file:
-    loaded_model_json = json_file.read()
+    model_data = json.load(json_file)
+
+# Dynamic cleaner for Keras 3 compatibility (strips unrecognized quantization_config fields)
+def clean_keras_config(config_dict):
+    if not isinstance(config_dict, dict):
+        return
+    if "layers" in config_dict:
+        for layer in config_dict["layers"]:
+            if "config" in layer:
+                layer["config"].pop("quantization_config", None)
+    for key, value in config_dict.items():
+        if isinstance(value, dict):
+            clean_keras_config(value)
+        elif isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    clean_keras_config(item)
+
+if "config" in model_data:
+    clean_keras_config(model_data["config"])
+
+loaded_model_json = json.dumps(model_data)
 model = model_from_json(loaded_model_json)
 model.load_weights("model.weights.h5")
 
@@ -47,18 +70,6 @@ emotion_mapping = {
 
 class FrameRequest(BaseModel):
     image_base64: str
-
-class AuthRequest(BaseModel):
-    email: str
-    password: str
-
-@app.post("/signup")
-def signup(payload: AuthRequest):
-    return {"message": "User created successfully", "token": "mock_jwt_token"}
-
-@app.post("/login")
-def login(payload: AuthRequest):
-    return {"token": "mock_jwt_token"}
 
 # Use standard `def` (not async) so FastAPI runs this in a separate thread pool!
 @app.post("/analyze-frame")

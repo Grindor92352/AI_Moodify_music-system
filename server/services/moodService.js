@@ -13,7 +13,8 @@ const FALLBACK_MOODS = ['Happiness', 'Sadness', 'Stress', 'Anger', 'Anxiety', 'F
  */
 exports.getMoodFromImage = async (base64Image) => {
   try {
-    const response = await axios.post('http://localhost:8000/analyze-frame', {
+    const aiPipelineUrl = process.env.AI_PIPELINE_URL || 'http://localhost:8000';
+    const response = await axios.post(`${aiPipelineUrl}/analyze-frame`, {
       image_base64: base64Image
     }, { timeout: 10000 });
 

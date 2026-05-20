@@ -1,24 +1,8 @@
 const { getDb } = require('../database');
-const jwt = require('jsonwebtoken');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'moodify_super_secret_key_123';
-
-// Helper to extract authenticated email from cookie
-function getEmailFromCookie(req) {
-  const token = req.cookies?.jwt_token;
-  if (!token) return null;
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    return decoded.email;
-  } catch {
-    return null;
-  }
-}
 
 // POST /api/history/save
 exports.saveHistory = async (req, res) => {
-  const email = getEmailFromCookie(req);
-  if (!email) return res.status(401).json({ error: 'Not authenticated' });
+  const email = req.user.email;
 
   const { mood, songs, videoIds } = req.body;
   if (!mood) return res.status(400).json({ error: 'Mood is required' });
@@ -38,8 +22,7 @@ exports.saveHistory = async (req, res) => {
 
 // GET /api/history
 exports.getHistory = async (req, res) => {
-  const email = getEmailFromCookie(req);
-  if (!email) return res.status(401).json({ error: 'Not authenticated' });
+  const email = req.user.email;
 
   try {
     const db = await getDb();

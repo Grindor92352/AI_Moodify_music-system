@@ -1,13 +1,13 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { User, History, Library, LogOut, Music2, Disc3 } from 'lucide-react';
+import { LayoutDashboard, History, Library, LogOut, Music2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const navItems = [
   {
-    name: 'Profile',
-    path: '/profile',
-    icon: <User size={18} />,
+    name: 'Dashboard',
+    path: '/dashboard',
+    icon: <LayoutDashboard size={18} />,
     gradient: 'from-violet-500 to-purple-600',
     glow: 'rgba(139,92,246,0.4)',
   },
@@ -33,7 +33,7 @@ const Sidebar: React.FC = () => {
   const initial = displayName ? displayName.charAt(0).toUpperCase() : 'U';
 
   return (
-    <aside className="w-64 min-h-screen flex flex-col sticky top-0 border-r border-white/[0.06]"
+    <aside className="w-64 h-screen shrink-0 flex flex-col sticky top-0 overflow-hidden border-r border-white/[0.06]"
       style={{ background: 'linear-gradient(180deg, #0a0a0f 0%, #050508 100%)' }}>
 
       {/* Logo */}

@@ -110,3 +110,12 @@ body {
 .animate-scroll-bounce {
   animation: scroll-bounce 2s ease-in-out infinite;
 }
+
+/* Slower, gentler floating bob */
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-12px) rotate(1.5deg); }
+}
+.animate-float-gentle {
+  animation: float-gentle 6s ease-in-out infinite;
+}

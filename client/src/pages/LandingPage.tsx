@@ -2,14 +2,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Sparkles, ArrowRight, Brain, Music2, History,
-  Mail, MapPin, Phone, GitBranch, Share2, Camera,
-  ChevronDown, Shield, Zap, HeartPulse
+  Mail, MapPin, GitBranch, Share2, Camera,
+  Shield, Zap, HeartPulse, Smile
 } from 'lucide-react';
 
 /* ─────────────────────────────────────────
    Intersection-Observer hook for scroll reveals
-───────────────────────────────────────── */
-function useReveal(threshold = 0.15) {
+   ───────────────────────────────────────── */
+function useReveal(threshold = 0.1) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -27,80 +27,71 @@ function useReveal(threshold = 0.15) {
 
 /* ─────────────────────────────────────────
    Feature card data
-───────────────────────────────────────── */
+   ───────────────────────────────────────── */
 const features = [
   {
-    icon: <Brain size={28} />,
-    accent: 'from-violet-600 to-purple-500',
-    glow: 'rgba(139,92,246,0.4)',
-    glowHover: '0 8px 60px rgba(139,92,246,0.4)',
+    icon: <Brain size={24} />,
+    accent: 'from-violet-500 to-indigo-500',
+    glow: 'rgba(139,92,246,0.15)',
     tag: 'AI-Powered',
-    title: 'Live Facial Emotion Detection',
-    desc: 'Our on-device CNN model reads 48 facial landmarks in milliseconds, privately detecting Happiness, Sadness, Anger, Anxiety and more — all without any data leaving your machine.',
-    img: '/feature_face.png',
+    title: 'On-Device Face Analysis',
+    desc: 'Our local computer vision model processes facial geometry in milliseconds. It detects emotional states privately on your machine—your video stream never uploads to any server.',
   },
   {
-    icon: <Music2 size={28} />,
-    accent: 'from-pink-600 to-rose-500',
-    glow: 'rgba(236,72,153,0.4)',
-    glowHover: '0 8px 60px rgba(236,72,153,0.4)',
-    tag: 'YouTube Integration',
-    title: 'Intelligent Dynamic Curation',
-    desc: 'Every session generates a fresh playlist via live YouTube Data API v3 queries. No two moods produce the same mix — the music always evolves as you do.',
-    img: '/feature_music.png',
+    icon: <Music2 size={24} />,
+    accent: 'from-pink-500 to-rose-500',
+    glow: 'rgba(236,72,153,0.15)',
+    tag: 'Dynamic Curation',
+    title: 'Adaptive Music Therapy',
+    desc: 'Generates custom playlist selections matching your current mood. Integrates dynamically with the YouTube Data API to ensure your sessions feel fresh and personalized.',
   },
   {
-    icon: <History size={28} />,
-    accent: 'from-cyan-500 to-blue-500',
-    glow: 'rgba(6,182,212,0.4)',
-    glowHover: '0 8px 60px rgba(6,182,212,0.4)',
+    icon: <History size={24} />,
+    accent: 'from-cyan-400 to-blue-500',
+    glow: 'rgba(34,211,238,0.15)',
     tag: 'Persistent Memory',
-    title: 'Seamless Emotional Tracking',
-    desc: 'Your full mood and listening history is stored securely in PostgreSQL. Revisit your emotional journey, replay your favourite therapeutic tracks, and understand your emotional patterns.',
-    img: '/feature_history.png',
+    title: 'Track Your Journey',
+    desc: 'Optionally store your mood history and top therapeutic tracks in a secure PostgreSQL database. Observe your emotional patterns and revisit past playlists with ease.',
   },
 ];
 
 const stats = [
-  { value: '48', suffix: '', label: 'Facial Landmarks' },
-  { value: '100', suffix: '+', label: 'Concurrent Users' },
-  { value: '5', suffix: '', label: 'Core Moods Mapped' },
-  { value: '0', suffix: '', label: 'Data Sent Externally' },
+  { value: '48', label: 'Landmarks Tracked' },
+  { value: '100%', label: 'Local Data Privacy' },
+  { value: '6', label: 'Mapped Mood States' },
+  { value: '0', label: 'Cloud Uploads' },
 ];
 
 const steps = [
   {
     num: '01',
     color: 'from-indigo-500 to-violet-500',
-    glow: 'rgba(99,102,241,0.45)',
-    title: 'Open Your Camera',
-    desc: 'Click "Detect My Mood" and allow camera access. Our local AI model initialises instantly — no data is ever uploaded.',
+    title: 'Face Scan',
+    desc: 'Activate your webcam for a quick, secure frame analysis. Our local AI maps facial landmarks instantly.',
   },
   {
     num: '02',
     color: 'from-violet-500 to-pink-500',
-    glow: 'rgba(236,72,153,0.45)',
-    title: 'AI Reads Your Face',
-    desc: 'Our CNN captures one frame, detects facial landmarks, applies histogram equalisation for lighting accuracy, and decodes your dominant emotion.',
+    title: 'Mood Decoding',
+    desc: 'The model checks expression metrics to determine if you feel happy, sad, stressed, anxious, angry, or fatigued.',
   },
   {
     num: '03',
-    color: 'from-pink-500 to-orange-400',
-    glow: 'rgba(251,146,60,0.45)',
-    title: 'Your Playlist Appears',
-    desc: 'The system maps your mood to a live YouTube query and instantly generates a fresh Bollywood playlist — ready to play in one click.',
+    color: 'from-pink-500 to-rose-500',
+    title: 'Sound Delivery',
+    desc: 'The backend builds a tailored YouTube playlist of Bollywood music designed to lift or soothe your spirits.',
   },
 ];
 
 const trustBadges = [
   { icon: <Shield size={14} />, label: 'Private & Local AI' },
   { icon: <Zap size={14} />, label: 'Real-Time Detection' },
-  { icon: <HeartPulse size={14} />, label: 'Mood Therapeutic' },
+  { icon: <HeartPulse size={14} />, label: 'Music Therapy' },
 ];
 
 /* ─────────────────────────────────────────
-   Feature Card
-───────────────────────────────────────── */
+   Feature Card Component
+   ───────────────────────────────────────── */
 function FeatureCard({ f, index }: { f: typeof features[0]; index: number }) {
   const { ref, visible } = useReveal();
   const [hovered, setHovered] = useState(false);
@@ -109,72 +100,52 @@ function FeatureCard({ f, index }: { f: typeof features[0]; index: number }) {
       ref={ref}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="relative rounded-3xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl overflow-hidden cursor-default"
+      className="relative rounded-2xl border border-white/[0.05] bg-white/[0.01] backdrop-blur-xl overflow-hidden p-8 transition-all duration-500"
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? (hovered ? 'translateY(-8px)' : 'translateY(0)') : 'translateY(60px)',
-        transition: `opacity 0.7s ease ${index * 0.15}s, transform 0.5s cubic-bezier(0.16,1,0.3,1)`,
-        boxShadow: hovered ? f.glowHover : '0 0 0 rgba(0,0,0,0)',
-        borderColor: hovered ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.08)',
+        transform: visible ? 'translateY(0)' : 'translateY(40px)',
+        transition: `opacity 0.7s ease ${index * 0.1}s, transform 0.6s cubic-bezier(0.16,1,0.3,1) ${index * 0.1}s`,
+        borderColor: hovered ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)',
+        boxShadow: hovered ? `0 10px 40px -15px ${f.glow}` : 'none',
       }}
     >
-      {/* Image strip */}
-      <div className="relative h-52 overflow-hidden bg-black/40 flex items-center justify-center">
-        <img
-          src={f.img}
-          alt={f.title}
-          className="w-full h-full object-contain"
-          style={{
-            mixBlendMode: 'screen',
-            filter: `drop-shadow(0 0 30px ${f.glow})`,
-            transform: hovered ? 'scale(1.06)' : 'scale(0.92)',
-            transition: 'transform 0.6s ease',
-          }}
-        />
-        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#090909] to-transparent" />
-      </div>
-
-      {/* Content */}
-      <div className="p-7">
-        <div className="flex items-center gap-3 mb-5">
-          <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${f.accent} flex items-center justify-center text-white shadow-lg`}>
-            {f.icon}
-          </div>
-          <span className={`text-xs font-bold tracking-widest uppercase bg-gradient-to-r ${f.accent} bg-clip-text text-transparent`}>
-            {f.tag}
-          </span>
+      <div className="flex items-center gap-3 mb-5">
+        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${f.accent} flex items-center justify-center text-white shadow-lg`}>
+          {f.icon}
         </div>
-        <h3 className="text-xl font-bold text-white mb-3 leading-snug">{f.title}</h3>
-        <p className="text-neutral-400 text-[15px] leading-relaxed">{f.desc}</p>
+        <span className={`text-[10px] font-bold tracking-widest uppercase bg-gradient-to-r ${f.accent} bg-clip-text text-transparent`}>
+          {f.tag}
+        </span>
       </div>
+      <h3 className="text-lg font-bold text-white mb-3 tracking-tight">{f.title}</h3>
+      <p className="text-neutral-400 text-sm leading-relaxed">{f.desc}</p>
 
-      {/* Bottom animated border */}
+      {/* Decorative accent glow */}
       <div
-        className={`absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r ${f.accent}`}
-        style={{ opacity: hovered ? 1 : 0, transition: 'opacity 0.4s ease' }}
+        className={`absolute -top-12 -right-12 w-24 h-24 rounded-full bg-gradient-to-br ${f.accent} blur-2xl opacity-10 transition-opacity duration-500 ${hovered ? 'opacity-20' : ''}`}
       />
     </div>
   );
 }
 
 /* ─────────────────────────────────────────
-   Stats Bar
-───────────────────────────────────────── */
-function StatsBar() {
+   Stats Bar Component
+   ───────────────────────────────────────── */
+function StatsSection() {
   const { ref, visible } = useReveal();
   return (
-    <div ref={ref} className="w-full max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-px bg-white/[0.05] rounded-3xl overflow-hidden border border-white/[0.05]">
+    <div ref={ref} className="w-full max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-px bg-white/[0.04] rounded-2xl overflow-hidden border border-white/[0.04] backdrop-blur-md">
       {stats.map((s, i) => (
-        <div key={s.label} className="bg-[#080808] px-8 py-10 flex flex-col items-center text-center"
+        <div key={s.label} className="bg-black/20 px-8 py-8 flex flex-col items-center text-center"
           style={{
             opacity: visible ? 1 : 0,
-            transform: visible ? 'translateY(0)' : 'translateY(30px)',
-            transition: `all 0.6s ease ${i * 0.1}s`,
+            transform: visible ? 'translateY(0)' : 'translateY(20px)',
+            transition: `all 0.6s cubic-bezier(0.16,1,0.3,1) ${i * 0.08}s`,
           }}>
-          <span className="text-5xl font-black text-white tracking-tighter mb-2">
-            {s.value}<span className="text-indigo-400">{s.suffix}</span>
+          <span className="text-3xl font-black text-white tracking-tight mb-1">
+            {s.value}
           </span>
-          <span className="text-xs text-neutral-500 font-semibold uppercase tracking-widest">{s.label}</span>
+          <span className="text-[10px] text-neutral-500 font-semibold uppercase tracking-wider">{s.label}</span>
         </div>
       ))}
     </div>
@@ -182,270 +153,323 @@ function StatsBar() {
 }
 
 /* ─────────────────────────────────────────
-   Features Section Header
-───────────────────────────────────────── */
-function FeaturesHeader() {
-  const { ref, visible } = useReveal();
-  return (
-    <div ref={ref} className="text-center mb-20"
-      style={{ opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateY(40px)', transition: 'all 0.8s ease' }}>
-      <span className="text-xs font-bold tracking-[0.3em] text-indigo-400 uppercase mb-4 block">Core Capabilities</span>
-      <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-6">
-        Everything you need to<br />
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-pink-400">feel the music</span>
-      </h2>
-      <p className="text-neutral-500 text-xl max-w-2xl mx-auto leading-relaxed">
-        Three powerful systems working in perfect harmony, designed around your emotional wellbeing.
-      </p>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────
-   How It Works Section
-───────────────────────────────────────── */
-function HowItWorksHeader() {
-  const { ref, visible } = useReveal();
-  return (
-    <div ref={ref} className="text-center mb-20"
-      style={{ opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateY(40px)', transition: 'all 0.8s ease' }}>
-      <span className="text-xs font-bold tracking-[0.3em] text-pink-400 uppercase mb-4 block">Simple by Design</span>
-      <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-4">How it Works</h2>
-      <p className="text-neutral-500 text-xl max-w-xl mx-auto">Three effortless steps to musical harmony.</p>
-    </div>
-  );
-}
-
+   Step Card Component
+   ───────────────────────────────────────── */
 function StepCard({ s, index }: { s: typeof steps[0]; index: number }) {
   const { ref, visible } = useReveal();
   return (
-    <div ref={ref} className="flex flex-col items-center text-center"
+    <div ref={ref} className="flex flex-col items-center text-center relative px-4"
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(50px)',
-        transition: `all 0.8s cubic-bezier(0.16,1,0.3,1) ${index * 0.2}s`,
+        transform: visible ? 'translateY(0)' : 'translateY(30px)',
+        transition: `all 0.8s cubic-bezier(0.16,1,0.3,1) ${index * 0.15}s`,
       }}>
-      <div className="relative mb-8">
-        <div className={`w-28 h-28 rounded-full bg-gradient-to-br ${s.color} flex items-center justify-center text-4xl font-black text-white`}
-          style={{ boxShadow: `0 0 50px ${s.glow}, 0 0 100px ${s.glow}30` }}>
+      <div className="relative mb-6">
+        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center text-lg font-black text-white shadow-md shadow-indigo-500/10`}>
           {s.num}
         </div>
       </div>
-      <h3 className="text-xl font-bold mb-3">{s.title}</h3>
-      <p className="text-neutral-500 leading-relaxed text-[15px] max-w-xs">{s.desc}</p>
+      <h3 className="text-base font-bold text-white mb-2 tracking-tight">{s.title}</h3>
+      <p className="text-neutral-500 leading-relaxed text-xs max-w-xs">{s.desc}</p>
     </div>
   );
 }
 
 /* ─────────────────────────────────────────
-   Main Landing Page
-───────────────────────────────────────── */
+   Main Landing Page Component
+   ───────────────────────────────────────── */
 const LandingPage: React.FC = () => {
   return (
-    <div className="bg-[#050505] text-white selection:bg-indigo-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-indigo-500/20 overflow-x-hidden font-sans relative">
+      
+      {/* Grid background & Ambient Radial Glows */}
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Subtle grid layer */}
+        <div 
+          className="absolute inset-0 opacity-[0.03]" 
+          style={{ 
+            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+            backgroundSize: '24px 24px'
+          }}
+        />
+        {/* Top-right blur blob */}
+        <div className="absolute top-[-20%] right-[-10%] w-[60%] aspect-square rounded-full bg-indigo-600/[0.08] blur-[120px] pointer-events-none" />
+        {/* Mid-left blur blob */}
+        <div className="absolute top-[40%] left-[-20%] w-[50%] aspect-square rounded-full bg-pink-600/[0.05] blur-[140px] pointer-events-none" />
+      </div>
 
       {/* ══════════════════════════════════
-          HERO
-      ══════════════════════════════════ */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-6">
+          STICKY NAVBAR
+          ══════════════════════════════════ */}
+      <header className="sticky top-0 z-50 w-full border-b border-white/[0.04] bg-[#050505]/70 backdrop-blur-md transition-colors duration-300">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+              <Music2 size={16} className="text-white" />
+            </div>
+            <span className="text-base font-extrabold tracking-tight text-white">AI Moodify</span>
+          </Link>
 
-        {/* Ambient blobs */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-[-300px] left-[-300px] w-[800px] h-[800px] rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.10) 0%, transparent 70%)' }} />
-          <div className="absolute bottom-[-300px] right-[-300px] w-[800px] h-[800px] rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%)' }} />
-        </div>
-
-        {/* 3D headphone — ONLY the headphone rotates, text is 100% static */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none"
-          style={{ perspective: '1200px' }}>
-          {/* Ambient glow ring behind the headphone */}
-          <div className="absolute w-[600px] h-[600px] rounded-full animate-glow-pulse"
-            style={{ background: 'radial-gradient(ellipse, rgba(99,102,241,0.20) 0%, rgba(139,92,246,0.08) 50%, transparent 75%)' }} />
-          {/* Headphone with Y-axis 3D spin */}
-          <div className="animate-headphone-spin" style={{ transformStyle: 'preserve-3d' }}>
-            <img
-              src="/headphones.png"
-              alt="3D Headphones"
-              className="w-[600px] h-[600px] object-contain"
-              style={{
-                opacity: 0.65,
-                filter: 'drop-shadow(0 0 80px rgba(99,102,241,0.6)) drop-shadow(0 0 30px rgba(139,92,246,0.45)) brightness(1.1) saturate(1.2)',
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Foreground text — completely static, no mouse tracking */}
-        <div className="relative z-10 w-full max-w-5xl text-center space-y-8">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-md text-sm text-neutral-300 animate-fade-in-up">
-            <Sparkles size={16} className="text-indigo-400" />
-            <span className="font-semibold tracking-wide">The Future of Emotional Therapy</span>
-          </div>
-
-          {/* Main headline */}
-          <h1
-            className="text-7xl md:text-8xl lg:text-[100px] font-black tracking-tighter leading-[1.0] animate-fade-in-up"
-            style={{ animationDelay: '0.1s', opacity: 0 }}
-          >
-            Tune into<br />
-            <span
-              className="animate-gradient-text bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400"
-              style={{ backgroundSize: '200% 200%' }}
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center gap-8">
+            <a href="#features" className="text-xs font-medium text-neutral-400 hover:text-white transition-colors">Features</a>
+            <a href="#how-it-works" className="text-xs font-medium text-neutral-400 hover:text-white transition-colors">How it Works</a>
+            <a 
+              href="https://github.com/Grindor92352/AI_Moodify_music-system" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="text-xs font-medium text-neutral-400 hover:text-white transition-colors flex items-center gap-1.5"
             >
-              your Emotions
+              <GitBranch size={13} />
+              GitHub
+            </a>
+          </nav>
+
+          {/* CTA */}
+          <div className="flex items-center gap-3">
+            <Link to="/signin" className="text-xs font-bold text-neutral-300 hover:text-white px-4 py-2 transition-colors">
+              Log In
+            </Link>
+            <Link to="/signup" className="text-xs font-bold bg-white text-black hover:bg-neutral-200 px-4 py-2 rounded-lg transition-all shadow-sm">
+              Get Started
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* ══════════════════════════════════
+          HERO SECTION
+          ══════════════════════════════════ */}
+      <section className="relative z-10 max-w-6xl mx-auto px-6 pt-16 pb-24 md:py-32 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+        
+        {/* Left column: Headings and copy */}
+        <div className="lg:col-span-7 space-y-6 text-left">
+          {/* Sparkles Badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/5 bg-white/[0.02] backdrop-blur-md text-xs text-neutral-300 animate-fade-in-up">
+            <Sparkles size={13} className="text-indigo-400" />
+            <span className="font-semibold tracking-wide">On-Device Facial Emotion Classifier</span>
+          </div>
+
+          <h1 className="text-5xl md:text-6xl xl:text-7xl font-extrabold tracking-tight leading-[1.05] animate-fade-in-up">
+            Tune into your<br />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-violet-400 to-pink-400">
+              Emotions
             </span>
           </h1>
 
-          <p
-            className="text-xl md:text-2xl text-neutral-400 max-w-2xl mx-auto font-light leading-relaxed animate-fade-in-up"
-            style={{ animationDelay: '0.2s', opacity: 0 }}
-          >
-            AI Moodify reads your face, decodes your mood, and curates a perfectly matched Bollywood playlist — all in real time, all on your device.
+          <p className="text-base md:text-lg text-neutral-400 max-w-xl font-light leading-relaxed animate-fade-in-up">
+            An AI-powered music therapy system that securely maps your facial expressions in real time to curate personalized Bollywood playlists. Local processing ensures full data privacy.
           </p>
 
-          {/* Trust badges */}
-          <div
-            className="flex flex-wrap items-center justify-center gap-3 animate-fade-in-up"
-            style={{ animationDelay: '0.3s', opacity: 0 }}
-          >
+          {/* CTA Buttons */}
+          <div className="flex flex-wrap items-center gap-4 pt-2 animate-fade-in-up">
+            <Link to="/signup"
+              className="group px-8 py-3.5 bg-white text-black rounded-full font-bold text-sm flex items-center gap-2 transition-all hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,255,255,0.15)]">
+              Begin Session
+              <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+            <Link to="/signin"
+              className="px-8 py-3.5 rounded-full font-bold text-sm text-neutral-300 hover:text-white border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:scale-[1.02] transition-all">
+              Launch Dashboard
+            </Link>
+          </div>
+
+          {/* Mini Trust Badges */}
+          <div className="flex flex-wrap items-center gap-4 pt-6 border-t border-white/[0.04] w-fit animate-fade-in-up">
             {trustBadges.map(b => (
-              <span key={b.label} className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/[0.03] text-sm text-neutral-400">
-                <span className="text-indigo-400">{b.icon}</span>{b.label}
+              <span key={b.label} className="inline-flex items-center gap-1.5 text-xs text-neutral-500">
+                <span className="text-indigo-400/80">{b.icon}</span>
+                {b.label}
               </span>
             ))}
           </div>
-
-          {/* CTA */}
-          <div
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 animate-fade-in-up"
-            style={{ animationDelay: '0.4s', opacity: 0 }}
-          >
-            <Link to="/signup"
-              className="group px-10 py-4 bg-white text-black rounded-full font-bold text-lg flex items-center gap-3 transition-all hover:scale-105 hover:shadow-[0_0_50px_rgba(255,255,255,0.25)]">
-              Get Started
-              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link to="/signin"
-              className="px-10 py-4 rounded-full font-bold text-lg text-white border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] hover:scale-105 transition-all">
-              Log In
-            </Link>
-          </div>
         </div>
 
-        {/* Scroll cue */}
-        <div className="animate-scroll-bounce absolute bottom-10 left-1/2 flex flex-col items-center gap-2">
-          <span className="text-[10px] tracking-[0.3em] font-bold uppercase text-neutral-600">Scroll</span>
-          <ChevronDown size={18} className="text-neutral-700" />
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════
-          STATS BAR
-      ══════════════════════════════════ */}
-      <section className="py-6 px-6 border-y border-white/[0.05]">
-        <StatsBar />
-      </section>
-
-      {/* ══════════════════════════════════
-          FEATURES
-      ══════════════════════════════════ */}
-      <section className="py-32 px-6">
-        <div className="max-w-6xl mx-auto">
-          <FeaturesHeader />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {features.map((f, i) => <FeatureCard key={f.title} f={f} index={i} />)}
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════
-          HOW IT WORKS
-      ══════════════════════════════════ */}
-      <section className="py-32 px-6 bg-[#030303]">
-        <div className="max-w-6xl mx-auto">
-          <HowItWorksHeader />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            {/* Connecting line */}
-            <div className="hidden md:block absolute top-14 left-[16.6%] right-[16.6%] h-px bg-gradient-to-r from-indigo-500/30 via-violet-500/30 to-pink-500/30" />
-            {steps.map((s, i) => <StepCard key={s.num} s={s} index={i} />)}
-          </div>
-          <div className="text-center mt-20">
-            <Link to="/signup"
-              className="group inline-flex items-center gap-3 px-12 py-5 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full font-bold text-lg text-white hover:scale-105 transition-transform shadow-[0_0_60px_rgba(99,102,241,0.4)] hover:shadow-[0_0_80px_rgba(99,102,241,0.6)]">
-              Start for Free
-              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════
-          FOOTER
-      ══════════════════════════════════ */}
-      <footer className="border-t border-white/[0.06] bg-[#020202] pt-20 pb-10 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-            {/* Brand */}
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-3 mb-5">
-                <img src="/logo.png" alt="Moodify Logo" className="w-9 h-9 object-contain"
-                  onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                <span className="text-2xl font-black tracking-tighter">AI Moodify</span>
+        {/* Right column: Sleek visual card/mockup */}
+        <div className="lg:col-span-5 relative flex items-center justify-center pointer-events-none">
+          {/* Subtle background glow */}
+          <div className="absolute w-72 h-72 rounded-full bg-indigo-500/10 blur-[80px]" />
+          
+          {/* Glassmorphic Mockup Shell */}
+          <div className="relative w-full max-w-[400px] aspect-square rounded-3xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-2xl p-6 shadow-2xl flex flex-col justify-between overflow-hidden">
+            
+            {/* Mockup Header */}
+            <div className="flex items-center justify-between border-b border-white/[0.04] pb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">AI Active Scan</span>
               </div>
-              <p className="text-neutral-500 text-[15px] leading-relaxed max-w-sm mb-6">
-                The next-generation emotional music therapy platform. Powered by on-device AI — your data never leaves your machine.
+              <div className="w-1.5 h-1.5 rounded-full bg-neutral-600" />
+            </div>
+
+            {/* Mockup Center: Headphones Floating Gently */}
+            <div className="flex-1 flex items-center justify-center my-4 relative">
+              <div className="animate-float-gentle">
+                <img
+                  src="/headphones.png"
+                  alt="AI Therapy Headphones"
+                  className="w-56 h-56 object-contain filter drop-shadow-[0_0_30px_rgba(99,102,241,0.25)]"
+                />
+              </div>
+
+              {/* Floating Glass Indicators */}
+              <div className="absolute top-2 left-2 px-3 py-1.5 rounded-xl border border-white/10 bg-black/60 backdrop-blur-md flex items-center gap-2 shadow-lg">
+                <Camera size={12} className="text-indigo-400" />
+                <span className="text-[9px] font-bold text-white uppercase tracking-wider">Webcam Ready</span>
+              </div>
+
+              <div className="absolute bottom-2 right-2 px-3 py-1.5 rounded-xl border border-white/10 bg-black/60 backdrop-blur-md flex items-center gap-2 shadow-lg">
+                <Smile size={12} className="text-emerald-400" />
+                <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">Mood: Calm</span>
+              </div>
+            </div>
+
+            {/* Mockup Footer: Custom Equalizer Simulation */}
+            <div className="flex items-center gap-1 h-6 px-2 justify-center border-t border-white/[0.04] pt-4">
+              {[0.4, 0.9, 0.6, 0.8, 0.3, 0.7, 0.5, 0.9, 0.4, 0.6, 0.8, 0.3].map((val, i) => (
+                <div 
+                  key={i} 
+                  className="w-1 bg-gradient-to-t from-indigo-500 to-pink-500 rounded-full"
+                  style={{ 
+                    height: `${val * 100}%`,
+                    animation: `float-gentle ${1.2 + i * 0.15}s ease-in-out infinite alternate`
+                  }} 
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      {/* ══════════════════════════════════
+          STATS SECTION
+          ══════════════════════════════════ */}
+      <section className="py-12 border-t border-white/[0.04] bg-gradient-to-b from-transparent to-[#070707]/30">
+        <div className="max-w-6xl mx-auto px-6">
+          <StatsSection />
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════
+          FEATURES SECTION
+          ══════════════════════════════════ */}
+      <section id="features" className="py-24 max-w-6xl mx-auto px-6 relative">
+        <div className="text-center mb-16">
+          <span className="text-[10px] font-bold tracking-[0.25em] text-indigo-400 uppercase mb-3 block">Technology</span>
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4 text-white">
+            Core Capabilities
+          </h2>
+          <p className="text-neutral-500 text-sm max-w-lg mx-auto leading-relaxed">
+            Designed for privacy, powered by machine learning, and refined for your auditory comfort.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {features.map((f, i) => (
+            <FeatureCard key={f.title} f={f} index={i} />
+          ))}
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════
+          HOW IT WORKS SECTION
+          ══════════════════════════════════ */}
+      <section id="how-it-works" className="py-24 bg-[#030303]/40 border-y border-white/[0.04]">
+        <div className="max-w-6xl mx-auto px-6">
+          
+          <div className="text-center mb-16">
+            <span className="text-[10px] font-bold tracking-[0.25em] text-pink-400 uppercase mb-3 block">Simple Workflow</span>
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4 text-white">How it Works</h2>
+            <p className="text-neutral-500 text-sm max-w-xs mx-auto">Get calibrated in three simple steps.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-6 relative">
+            {/* Connecting background line on desktop */}
+            <div className="hidden md:block absolute top-[24px] left-[15%] right-[15%] h-px bg-gradient-to-r from-indigo-500/20 via-violet-500/20 to-pink-500/20 pointer-events-none z-0" />
+            
+            {steps.map((s, i) => (
+              <StepCard key={s.num} s={s} index={i} />
+            ))}
+          </div>
+
+          {/* CTA at steps end */}
+          <div className="text-center mt-16">
+            <Link to="/signup"
+              className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full font-bold text-sm text-white hover:scale-[1.02] transition-transform shadow-lg shadow-indigo-600/10">
+              Start Your Scan
+              <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════
+          FOOTER SECTION
+          ══════════════════════════════════ */}
+      <footer className="bg-[#020202] border-t border-white/[0.04] pt-16 pb-8">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+            
+            {/* Left brand column */}
+            <div className="md:col-span-2 space-y-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                  <Music2 size={14} className="text-white" />
+                </div>
+                <span className="text-base font-extrabold tracking-tight text-white">AI Moodify</span>
+              </div>
+              <p className="text-neutral-500 text-xs leading-relaxed max-w-xs">
+                A localized music curation platform. Designed to process emotional metrics on-device for total security and zero cloud footprints.
               </p>
-              <div className="flex items-center gap-3">
+              
+              {/* Social icons */}
+              <div className="flex items-center gap-2 pt-2">
                 {[
-                  { icon: <GitBranch size={17} />, href: 'https://github.com/Grindor92352/AI_Moodify_music-system' },
-                  { icon: <Share2 size={17} />, href: '#' },
-                  { icon: <Camera size={17} />, href: '#' },
+                  { icon: <GitBranch size={14} />, href: 'https://github.com/Grindor92352/AI_Moodify_music-system' },
+                  { icon: <Share2 size={14} />, href: '#' },
+                  { icon: <Camera size={14} />, href: '#' },
                 ].map((s, i) => (
                   <a key={i} href={s.href} target="_blank" rel="noreferrer"
-                    className="w-10 h-10 rounded-xl border border-white/10 bg-white/[0.04] flex items-center justify-center text-neutral-400 hover:text-white hover:border-white/30 hover:bg-white/[0.08] transition-all">
+                    className="w-8 h-8 rounded-lg border border-white/5 bg-white/[0.02] flex items-center justify-center text-neutral-400 hover:text-white hover:border-white/20 hover:bg-white/[0.05] transition-all">
                     {s.icon}
                   </a>
                 ))}
               </div>
             </div>
 
-            {/* Links */}
+            {/* Links column */}
             <div>
-              <h4 className="text-xs font-bold tracking-widest uppercase text-neutral-400 mb-5">Product</h4>
-              <ul className="space-y-3">
-                {['Features', 'How it Works', 'Privacy Policy', 'Open Source'].map(l => (
-                  <li key={l}><a href="#" className="text-neutral-500 hover:text-white text-[15px] transition-colors">{l}</a></li>
-                ))}
+              <h4 className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 mb-4">Product</h4>
+              <ul className="space-y-2.5 text-xs text-neutral-500">
+                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
+                <li><a href="#how-it-works" className="hover:text-white transition-colors">How it Works</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
               </ul>
             </div>
 
-            {/* Contact */}
+            {/* Contact column */}
             <div>
-              <h4 className="text-xs font-bold tracking-widest uppercase text-neutral-400 mb-5">Contact</h4>
-              <ul className="space-y-4">
-                <li className="flex items-start gap-3 text-neutral-500 text-[15px]">
-                  <Mail size={15} className="text-indigo-400 mt-0.5 shrink-0" />
+              <h4 className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 mb-4">Contact</h4>
+              <ul className="space-y-2.5 text-xs text-neutral-500">
+                <li className="flex items-center gap-2">
+                  <Mail size={12} className="text-indigo-400" />
                   support@aimoodify.io
                 </li>
-                <li className="flex items-start gap-3 text-neutral-500 text-[15px]">
-                  <Phone size={15} className="text-indigo-400 mt-0.5 shrink-0" />
-                  +91 98765 43210
-                </li>
-                <li className="flex items-start gap-3 text-neutral-500 text-[15px]">
-                  <MapPin size={15} className="text-indigo-400 mt-0.5 shrink-0" />
+                <li className="flex items-center gap-2">
+                  <MapPin size={12} className="text-indigo-400" />
                   Jaipur, Rajasthan, India
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="border-t border-white/[0.06] pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-neutral-700 text-sm">© {new Date().getFullYear()} AI Moodify. All rights reserved.</p>
-            <p className="text-neutral-700 text-sm flex items-center gap-2">
-              Built with <span className="text-red-500/70">♥</span> using React, Node.js &amp; Python FastAPI
+          {/* Lower footer boundary */}
+          <div className="border-t border-white/[0.04] pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-[10px] text-neutral-600">© {new Date().getFullYear()} AI Moodify. All rights reserved.</p>
+            <p className="text-[10px] text-neutral-600 flex items-center gap-1.5">
+              Built with <span className="text-pink-500/80">♥</span> using React, Node.js &amp; Python FastAPI
             </p>
           </div>
         </div>

@@ -104,9 +104,9 @@ const LibraryPage: React.FC = () => {
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#050505] text-white">
+    <div className="flex h-screen overflow-hidden bg-[#050505] text-white">
       <Sidebar />
-      <main className="flex-1 p-8 overflow-y-auto custom-scrollbar">
+      <main className="min-h-0 flex-1 p-8 overflow-y-auto custom-scrollbar">
         <div className="max-w-5xl mx-auto">
 
           {/* Header */}

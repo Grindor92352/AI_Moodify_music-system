@@ -1,0 +1,65 @@
+services:
+  # 🌐 React Frontend (Serves production build on http://localhost:3000)
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: moodify-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # 🖥️ Node.js Express Orchestration Server
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: moodify-backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./server/.env
+    environment:
+      - AI_PIPELINE_URL=http://ai-pipeline:8000
+      - DATABASE_URL=postgresql://moodify_user:moodify_pass@postgres:5432/moodify
+      - NODE_ENV=production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ai-pipeline:
+        condition: service_started
+    restart: unless-stopped
+
+  # 🧠 Python FastAPI AI Emotion Classifier
+  ai-pipeline:
+    build:
+      context: ./ai-pipeline
+      dockerfile: Dockerfile
+    container_name: moodify-ai-pipeline
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  # 🐘 PostgreSQL Database (local, no external dependency)
+  postgres:
+    image: postgres:16-alpine
+    container_name: moodify-postgres
+    environment:
+      POSTGRES_USER: moodify_user
+      POSTGRES_PASSWORD: moodify_pass
+      POSTGRES_DB: moodify
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moodify_user -d moodify"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:

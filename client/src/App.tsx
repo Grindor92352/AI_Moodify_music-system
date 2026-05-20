@@ -6,7 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LandingPage from './pages/LandingPage';
 import SigninPage from './pages/SigninPage';
 import SignupPage from './pages/SignupPage';
-import ProfilePage from './pages/ProfilePage';
+import DashboardPage from './pages/DashboardPage';
 import ResultsPage from './pages/ResultsPage';
 import HistoryPage from './pages/HistoryPage';
 import LibraryPage from './pages/LibraryPage';
@@ -40,11 +40,11 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           
           <Route element={<ProtectedRoute />}>
-            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/profile" element={<Navigate to="/dashboard" replace />} />
             <Route path="/results" element={<ResultsPage />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/library" element={<LibraryPage />} />
-            <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
           </Route>
         </Routes>
       </AuthProvider>

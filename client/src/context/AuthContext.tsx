@@ -16,7 +16,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: () => void;
+  login: () => Promise<void>;
   logout: () => void;
 }
 
@@ -43,14 +43,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async () => {
-    // Optionally fetch user details again after login
-    try {
-      const res = await axios.get('http://localhost:5000/api/verify');
-      setUser(res.data);
-    } catch {
-      setUser({ email: 'user@example.com' }); // Fallback
-    }
-    navigate('/profile');
+    const res = await axios.get('http://localhost:5000/api/verify');
+    setUser(res.data);
+    navigate('/dashboard');
   };
 
   const logout = async () => {

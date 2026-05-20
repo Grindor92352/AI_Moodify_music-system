@@ -64,6 +64,41 @@ const BOLLYWOOD_LIBRARY = {
   ]
 };
 
+const PLAYLIST_LIBRARY = {
+  explore: [
+    { videoId: 'JGwWNGJdvx8', title: 'Shape of You', artist: 'Ed Sheeran' },
+    { videoId: 'OPf0YbXqDm0', title: 'Uptown Funk', artist: 'Mark Ronson' },
+    { videoId: '09R8_2nJtjg', title: 'Sugar', artist: 'Maroon 5' },
+    { videoId: 'qMFzol9ZKtM', title: 'Badtameez Dil', artist: 'Benny Dayal' },
+    { videoId: 'TtxwtPEQnKI', title: 'Jugnu', artist: 'Badshah' },
+    { videoId: '3Tug3Ls1AE8', title: 'Gallan Goodiyaan', artist: 'Shankar-Ehsaan-Loy' }
+  ],
+  bollywood: [
+    { videoId: 'qMFzol9ZKtM', title: 'Badtameez Dil', artist: 'Benny Dayal' },
+    { videoId: 'xIx_HbmRnfQ', title: 'London Thumakda', artist: 'Sonu Kakkar' },
+    { videoId: '3Tug3Ls1AE8', title: 'Gallan Goodiyaan', artist: 'Shankar-Ehsaan-Loy' },
+    { videoId: 'IJq0aryHTJE', title: 'Tum Hi Ho', artist: 'Arijit Singh' },
+    { videoId: 'aW3MISzfMfk', title: 'Channa Mereya', artist: 'Arijit Singh' },
+    { videoId: '8Rs1goQY2BQ', title: 'Kun Faya Kun', artist: 'A.R. Rahman' }
+  ],
+  hollywood: [
+    { videoId: 'RgKAFK5djSk', title: 'See You Again', artist: 'Wiz Khalifa' },
+    { videoId: '09R8_2nJtjg', title: 'Sugar', artist: 'Maroon 5' },
+    { videoId: 'kJQP7kiw5Fk', title: 'Despacito', artist: 'Luis Fonsi' },
+    { videoId: 'JGwWNGJdvx8', title: 'Shape of You', artist: 'Ed Sheeran' },
+    { videoId: 'OPf0YbXqDm0', title: 'Uptown Funk', artist: 'Mark Ronson' },
+    { videoId: 'YQHsXMglC9A', title: 'Hello', artist: 'Adele' }
+  ],
+  lofi: [
+    { videoId: 'lTRiuFIWV54', title: 'Lofi Hip Hop Radio', artist: 'Lofi Girl' },
+    { videoId: 'jfKfPfyJRdk', title: 'Lofi Beats', artist: 'Lofi Girl' },
+    { videoId: '5qap5aO4i9A', title: 'Iktara Lofi', artist: 'Kavita Seth' },
+    { videoId: 'n61ULEU7CO0', title: 'Relaxing Lofi', artist: 'Chillhop Music' },
+    { videoId: 'DWcJFNfaw9c', title: 'Late Night Lofi', artist: 'Lofi Boy' },
+    { videoId: 'tfBVp0Zi2iE', title: 'Coffee Shop Radio', artist: 'STEEZYASFUCK' }
+  ]
+};
+
 const MOOD_QUERIES = {
   happiness: 'Bollywood upbeat dance official audio -shorts',
   fatigue: 'Bollywood high energy mood lifter official audio -shorts',
@@ -73,12 +108,28 @@ const MOOD_QUERIES = {
   anger: 'Bollywood peaceful acoustic flute official audio -shorts'
 };
 
+const PLAYLIST_QUERIES = {
+  explore: 'new popular songs official audio music -shorts',
+  bollywood: 'Bollywood chartbusters trending official audio -shorts',
+  hollywood: 'Hollywood pop chartbusters official audio -shorts',
+  lofi: 'lofi beats relax focus official audio -shorts'
+};
+
+function getLibraryKey(input) {
+  const value = String(input || '').toLowerCase();
+  if (value.includes('explore')) return 'explore';
+  if (value.includes('bollywood')) return 'bollywood';
+  if (value.includes('hollywood')) return 'hollywood';
+  if (value.includes('lofi')) return 'lofi';
+  return value;
+}
+
 /**
  * Returns 4 song objects for the given mood.
  * Tries YouTube Data API first, falls back to static library on error.
  */
 exports.getVideosForMood = async (dominantMood) => {
-  const key = dominantMood.toLowerCase();
+  const key = getLibraryKey(dominantMood);
   const apiKey = process.env.YOUTUBE_API_KEY;
 
   if (!apiKey) {
@@ -87,7 +138,7 @@ exports.getVideosForMood = async (dominantMood) => {
   }
 
   try {
-    const query = MOOD_QUERIES[key] || `${dominantMood} song official audio -shorts`;
+    const query = PLAYLIST_QUERIES[key] || MOOD_QUERIES[key] || `${dominantMood} song official audio -shorts`;
     
     console.log(`[YouTube API] Searching live for: "${query}"`);
 
@@ -132,6 +183,6 @@ exports.getVideosForMood = async (dominantMood) => {
  * Returns a shuffled slice from the static fallback library.
  */
 function getStaticFallback(key) {
-  const pool = BOLLYWOOD_LIBRARY[key] || BOLLYWOOD_LIBRARY['happiness'];
+  const pool = PLAYLIST_LIBRARY[key] || BOLLYWOOD_LIBRARY[key] || BOLLYWOOD_LIBRARY['happiness'];
   return shuffle([...pool]).slice(0, 4);
 }

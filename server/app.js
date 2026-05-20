@@ -10,9 +10,10 @@ const authRoutes = require('./routes/authRoutes');
 const historyRoutes = require('./routes/historyRoutes');
 
 const port = 5000;
+const useClustering = process.env.USE_CLUSTER === 'true';
 
-// Setup clustering for handling 100+ concurrent users efficiently
-if (cluster.isMaster) {
+// Setup clustering for handling 100+ concurrent users efficiently (optional in Dev)
+if (useClustering && cluster.isMaster) {
   // Master process
   const numCPUs = os.cpus().length;
   console.log(`Master ${process.pid} is running`);
@@ -29,7 +30,7 @@ if (cluster.isMaster) {
   });
 
 } else {
-  // Worker processes
+  // Worker processes or Single Process Mode
   const app = express();
 
   // Explicitly restricted to port 3000, 3001, and 5173 to accept React requests securely
@@ -53,10 +54,15 @@ if (cluster.isMaster) {
   app.use('/api/history', historyRoutes);
 
   app.get('/', (req, res) => {
-    res.send(`Orchestration Server is robust and routing securely on Worker ${process.pid}.`);
+    const modeInfo = useClustering ? `Worker ${process.pid}` : 'Single Process';
+    res.send(`Orchestration Server is robust and routing securely on ${modeInfo}.`);
   });
 
+  const serverMsg = useClustering
+    ? `Worker ${process.pid} listening securely on port ${port} across all interfaces`
+    : `Server listening securely on port ${port} (Single Process Mode)`;
+
   app.listen(port, '0.0.0.0', () => {
-    console.log(`Worker ${process.pid} listening securely on port ${port} across all interfaces`);
+    console.log(serverMsg);
   });
 }

@@ -1,14 +1,42 @@
 const { Pool } = require('pg');
 
 // Create a new PostgreSQL connection pool
-// This will automatically read from environment variables or use these fallbacks.
-const pool = new Pool({
-  user: process.env.PGUSER || 'postgres',
-  host: process.env.PGHOST || 'localhost',
-  database: process.env.PGDATABASE || 'moodify',
-  password: process.env.PGPASSWORD || 'postgres', // Common default on Windows
-  port: process.env.PGPORT || 5432,
-});
+// Supports standard connection string (e.g. Neon DB, local Docker PG) or individual parameters
+let poolConfig;
+
+if (process.env.DATABASE_URL) {
+  const dbUrl = process.env.DATABASE_URL;
+  const isExternalDb = dbUrl.includes('neon.tech') || dbUrl.includes('supabase') || dbUrl.includes('amazonaws');
+
+  poolConfig = {
+    connectionString: dbUrl,
+    connectionTimeoutMillis: 10000,
+  };
+
+  // Only enable SSL for external hosted databases, not for local Docker PostgreSQL
+  if (isExternalDb) {
+    let dbHost = 'localhost';
+    try {
+      dbHost = new URL(dbUrl).hostname;
+    } catch (e) {
+      console.warn('Could not parse DATABASE_URL for hostname:', e.message);
+    }
+    poolConfig.ssl = {
+      rejectUnauthorized: false,
+      servername: dbHost,
+    };
+  }
+} else {
+  poolConfig = {
+    user: process.env.PGUSER || 'postgres',
+    host: process.env.PGHOST || 'localhost',
+    database: process.env.PGDATABASE || 'moodify',
+    password: process.env.PGPASSWORD || 'postgres',
+    port: process.env.PGPORT || 5432,
+  };
+}
+
+const pool = new Pool(poolConfig);
 
 // Prevent fatal crashes if PostgreSQL loses connection or credentials are bad
 pool.on('error', (err, client) => {

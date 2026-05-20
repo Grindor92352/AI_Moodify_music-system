@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, Music } from 'lucide-react';
+import { Mail, Lock, Music2, ArrowRight } from 'lucide-react';
 
 const SigninPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -17,7 +17,7 @@ const SigninPage: React.FC = () => {
     setLoading(true);
     try {
       await axios.post('http://localhost:5000/api/login', { email, password });
-      login(); // The cookie is automatically stored; just update state
+      await login(); // The cookie is automatically stored; verify before routing.
     } catch (err: any) {
       setError(err.response?.data?.error || err.message || 'Login failed');
     } finally {
@@ -26,73 +26,101 @@ const SigninPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-neutral-900/50 border border-neutral-800 backdrop-blur-xl rounded-3xl p-8 shadow-2xl">
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 relative overflow-hidden font-sans">
+      
+      {/* Decorative Background Assets */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div 
+          className="absolute inset-0 opacity-[0.03]" 
+          style={{ 
+            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+            backgroundSize: '24px 24px'
+          }}
+        />
+        <div className="absolute top-[30%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[450px] aspect-square rounded-full bg-indigo-600/[0.06] blur-[100px]" />
+      </div>
+
+      {/* Main Glass Card */}
+      <div className="relative z-10 w-full max-w-md bg-white/[0.02] border border-white/[0.05] backdrop-blur-2xl rounded-3xl p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-300">
+        
+        {/* Logo and Header */}
         <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-purple-600/20 text-purple-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Music size={24} />
-          </div>
-          <h2 className="text-3xl font-bold text-white">Welcome Back</h2>
-          <p className="text-neutral-400 mt-2">Log in to continue your session</p>
+          <Link to="/" className="inline-flex items-center gap-2 mb-5 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+              <Music2 size={20} className="text-white" />
+            </div>
+            <span className="text-lg font-black tracking-tight text-white">AI Moodify</span>
+          </Link>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Welcome Back</h2>
+          <p className="text-neutral-400 text-xs mt-1.5 leading-relaxed">Log in to restore your sessions and library.</p>
         </div>
 
-        {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm text-center">{error}</div>}
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-5 p-3 rounded-xl bg-red-500/10 border border-red-500/10 text-red-400 text-xs text-center font-medium animate-in fade-in-50 duration-200">
+            {error}
+          </div>
+        )}
 
+        {/* Credentials Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="relative">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" size={20} />
+          
+          {/* Email Input */}
+          <div className="relative group">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 group-focus-within:text-indigo-400 transition-colors" size={16} />
             <input 
               type="email" 
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="Email address" 
-              className="w-full bg-black/50 border border-neutral-800 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full bg-white/[0.02] border border-white/[0.06] rounded-xl py-3 pl-11 pr-4 text-sm text-white focus:outline-none focus:border-indigo-500/70 focus:bg-white/[0.04] transition-all"
             />
           </div>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" size={20} />
+
+          {/* Password Input */}
+          <div className="relative group">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 group-focus-within:text-indigo-400 transition-colors" size={16} />
             <input 
               type="password" 
               required
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="Password" 
-              className="w-full bg-black/50 border border-neutral-800 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full bg-white/[0.02] border border-white/[0.06] rounded-xl py-3 pl-11 pr-4 text-sm text-white focus:outline-none focus:border-indigo-500/70 focus:bg-white/[0.04] transition-all"
             />
           </div>
           
-          <div className="flex justify-end">
-            <a href="#" className="text-sm text-purple-400 hover:text-purple-300">Forgot Password?</a>
+          {/* Forgot Password link */}
+          <div className="flex justify-end pt-1">
+            <a href="#" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium">Forgot Password?</a>
           </div>
 
+          {/* Submit CTA */}
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full py-3.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-semibold transition-all disabled:opacity-50"
+            className="group w-full py-3 mt-2 bg-white hover:bg-neutral-200 text-black rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
           >
-            {loading ? 'Logging in...' : 'Log In'}
+            {loading ? 'Logging in...' : 'Sign In'}
+            {!loading && <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />}
           </button>
         </form>
 
-        <div className="mt-6 flex items-center gap-4 before:h-px before:flex-1 before:bg-neutral-800 after:h-px after:flex-1 after:bg-neutral-800">
-          <span className="text-xs text-neutral-500 uppercase">Or continue with</span>
+        {/* Divider */}
+        <div className="mt-6 flex items-center gap-4 before:h-px before:flex-1 before:bg-white/[0.06] after:h-px after:flex-1 after:bg-white/[0.06]">
+          <span className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">Or continue with</span>
         </div>
 
+        {/* Google OAuth Button */}
         <button 
-          onClick={async () => {
-            setLoading(true);
-            try {
-              // Real OAuth integration would redirect to the backend OAuth provider
-              window.location.href = 'http://localhost:5000/api/auth/google';
-            } catch (err) {
-              setLoading(false);
-            }
+          onClick={() => {
+            setError('Google sign-in is not configured yet');
           }}
           disabled={loading}
-          className="mt-6 w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-medium transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+          className="mt-5 w-full py-2.5 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] text-neutral-300 hover:text-white rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2.5 disabled:opacity-50"
         >
-          <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
@@ -101,8 +129,9 @@ const SigninPage: React.FC = () => {
           {loading ? 'Connecting...' : 'Continue with Google'}
         </button>
 
-        <p className="mt-8 text-center text-sm text-neutral-400">
-          Don't have an account? <Link to="/signup" className="text-purple-400 hover:text-purple-300 font-semibold">Sign Up</Link>
+        {/* Footer Link */}
+        <p className="mt-8 text-center text-xs text-neutral-400">
+          Don't have an account? <Link to="/signup" className="text-indigo-400 hover:text-indigo-300 font-bold transition-colors">Sign Up</Link>
         </p>
       </div>
     </div>
