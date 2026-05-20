@@ -1,40 +1,47 @@
+from contextlib import asynccontextmanager
+import os
+import json
+import base64
+import hashlib
+import traceback
+from collections import OrderedDict
+
+import anyio
+import cv2
+import mediapipe as mp
+import numpy as np
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import cv2
-import numpy as np
-import base64
-import anyio
 from tensorflow.keras.models import model_from_json
-from collections import OrderedDict
-import hashlib
-import traceback
-import mediapipe as mp
 
-app = FastAPI(title="AI Moodify - Local Emotion Detection")
+WEIGHTS_PATH = os.environ.get("MODEL_WEIGHTS_PATH", "model.weights.h5")
+ARCH_PATH = os.environ.get("MODEL_ARCH_PATH", "model_arch.json")
 
-@app.on_event("startup")
-async def startup_event():
-    # Boost threadpool size for 100 concurrent users performing synchronous OpenCV/Keras operations
-    limiter = anyio.to_thread.current_default_thread_limiter()
-    limiter.total_tokens = 100
+MODEL_READY = False
+model = None
+face_detector = None
 
-# Keep the CORS middleware so the frontend can connect
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+CACHE = OrderedDict()
+MAX_CACHE_SIZE = 150
 
-import json
+emotion_mapping = {
+    0: "Anger",
+    1: "Anger",
+    2: "Anxiety",
+    3: "Happiness",
+    4: "Sadness",
+    5: "Happiness",
+    6: "Fatigue",
+}
 
-# 1. Load your custom CNN Model Architecture and Weights
-with open("model_arch.json", "r") as json_file:
-    model_data = json.load(json_file)
+CORS_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:5173",
+]
 
-# Dynamic cleaner for Keras 3 compatibility (strips unrecognized quantization_config fields)
+
 def clean_keras_config(config_dict):
     if not isinstance(config_dict, dict):
         return
@@ -50,31 +57,54 @@ def clean_keras_config(config_dict):
                 if isinstance(item, dict):
                     clean_keras_config(item)
 
-if "config" in model_data:
-    clean_keras_config(model_data["config"])
 
-loaded_model_json = json.dumps(model_data)
-model = model_from_json(loaded_model_json)
-model.load_weights("model.weights.h5")
+def _load_cnn_model():
+    global model, MODEL_READY
+    if not os.path.isfile(ARCH_PATH):
+        print(f"[AI Pipeline] WARN: {ARCH_PATH} not found. CNN inference disabled.")
+        return
+    with open(ARCH_PATH, "r", encoding="utf-8") as json_file:
+        model_data = json.load(json_file)
+    if "config" in model_data:
+        clean_keras_config(model_data["config"])
+    loaded_model_json = json.dumps(model_data)
+    model = model_from_json(loaded_model_json)
+    if not os.path.isfile(WEIGHTS_PATH):
+        print(
+            f"[AI Pipeline] WARN: {WEIGHTS_PATH} not found. "
+            "Place trained weights in ai-pipeline/ or set MODEL_WEIGHTS_PATH. "
+            "Using fallback mood heuristics until weights are available."
+        )
+        return
+    model.load_weights(WEIGHTS_PATH)
+    MODEL_READY = True
+    print("[AI Pipeline] CNN model and weights loaded.")
 
-# Use MediaPipe to improve face detection quality and multi-face handling
-mp_face_detection = mp.solutions.face_detection
-face_detector = mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.55)
 
-# Cache repeated requests to reduce duplicate inference and stabilize repeated mood detection
-CACHE = OrderedDict()
-MAX_CACHE_SIZE = 150
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global face_detector
+    limiter = anyio.to_thread.current_default_thread_limiter()
+    limiter.total_tokens = 100
+    _load_cnn_model()
+    mp_face_detection = mp.solutions.face_detection
+    face_detector = mp_face_detection.FaceDetection(
+        model_selection=1, min_detection_confidence=0.55
+    )
+    yield
+    face_detector = None
 
-# 2. Map FER2013 baseline emotions to your Bollywood Music logic
-emotion_mapping = {
-    0: "Anger",
-    1: "Anger",
-    2: "Anxiety",
-    3: "Happiness",
-    4: "Sadness",
-    5: "Happiness",
-    6: "Fatigue"  # Neutral triggers relaxing music
-}
+
+app = FastAPI(title="AI Moodify - Local Emotion Detection", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 class FrameRequest(BaseModel):
     image_base64: str
@@ -109,14 +139,25 @@ def _normalize_bbox(bbox, width, height, padding_ratio=0.1):
 
 
 def _predict_emotion(face_image):
+    emotions = ["Angry", "Disgust", "Fear", "Happy", "Sad", "Surprise", "Neutral"]
+    if not MODEL_READY or model is None:
+        gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
+        brightness = float(np.mean(gray))
+        if brightness < 85:
+            max_index = 4
+        elif brightness > 170:
+            max_index = 3
+        else:
+            max_index = 6
+        probs = {emotions[i]: (0.7 if i == max_index else 0.05) for i in range(7)}
+        return max_index, probs
+
     gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
     gray = cv2.equalizeHist(gray)
     gray = cv2.resize(gray, (48, 48))
     gray = gray / 255.0
     gray = np.reshape(gray, (1, 48, 48, 1))
-
     prediction = model.predict(gray, verbose=0)
-    emotions = ["Angry", "Disgust", "Fear", "Happy", "Sad", "Surprise", "Neutral"]
     probs = {emotions[i]: float(prediction[0][i]) for i in range(7)}
     max_index = int(np.argmax(prediction))
     return max_index, probs
@@ -127,36 +168,31 @@ def _build_face_result(detection, image):
     bbox = detection.location_data.relative_bounding_box
     x1, y1, x2, y2 = _normalize_bbox(bbox, width, height)
     face_crop = image[y1:y2, x1:x2]
-
     if face_crop.size == 0:
         return None
-
     max_index, probs = _predict_emotion(face_crop)
     mood = emotion_mapping.get(max_index, "Happiness")
     confidence = float(np.max(list(probs.values())))
-
     return {
         "mood": mood,
         "confidence": confidence,
         "probabilities": probs,
         "detection_score": float(detection.score[0]) if detection.score else 0.0,
-        "bounding_box": {
-            "x1": x1,
-            "y1": y1,
-            "x2": x2,
-            "y2": y2,
-        }
+        "bounding_box": {"x1": x1, "y1": y1, "x2": x2, "y2": y2},
     }
 
-# Use standard `def` (not async) so FastAPI runs this in a separate thread pool!
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "model_ready": MODEL_READY}
+
+
 @app.post("/analyze-frame")
 def analyze_frame(payload: FrameRequest):
     try:
         base64_string = payload.image_base64
-        
-        # Strip the metadata prefix if it exists
-        encoded_data = base64_string.split(',')[1] if ',' in base64_string else base64_string
-        cache_key = hashlib.sha256(encoded_data.encode('utf-8')).hexdigest()
+        encoded_data = base64_string.split(",")[1] if "," in base64_string else base64_string
+        cache_key = hashlib.sha256(encoded_data.encode("utf-8")).hexdigest()
 
         cached_response = _get_cache(cache_key)
         if cached_response:
@@ -181,7 +217,7 @@ def analyze_frame(payload: FrameRequest):
                 "probabilities": {},
                 "faces": [],
                 "face_count": 0,
-                "warning": "No face detected. Returning fallback mood."
+                "warning": "No face detected. Returning fallback mood.",
             }
             _set_cache(cache_key, response)
             return {**response, "cached": False}
@@ -199,7 +235,7 @@ def analyze_frame(payload: FrameRequest):
                 "probabilities": {},
                 "faces": [],
                 "face_count": 0,
-                "warning": "Face detected but extraction failed. Returning fallback mood."
+                "warning": "Face detected but extraction failed. Returning fallback mood.",
             }
             _set_cache(cache_key, response)
             return {**response, "cached": False}
@@ -211,9 +247,8 @@ def analyze_frame(payload: FrameRequest):
             "probabilities": dominant_face["probabilities"],
             "faces": face_results,
             "face_count": len(face_results),
-            "cached": False
+            "cached": False,
         }
-
         _set_cache(cache_key, response)
         return response
 

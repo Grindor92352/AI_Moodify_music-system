@@ -2,26 +2,21 @@ const express = require('express');
 const router = express.Router();
 const playlistController = require('../controllers/playlistController');
 const { requireAuth } = require('../middleware/authMiddleware');
+const {
+  playlistCreate,
+  playlistUpdate,
+  playlistIdParam,
+  playlistSongParams,
+  addSongToPlaylist
+} = require('../validators');
 
-// All playlist routes require authentication
 router.use(requireAuth);
 
-// Get user's playlists
 router.get('/', playlistController.getUserPlaylists);
-
-// Create new playlist
-router.post('/create', playlistController.createPlaylist);
-
-// Add song to playlist
-router.post('/:playlistId/add-song', playlistController.addSongToPlaylist);
-
-// Remove song from playlist
-router.delete('/:playlistId/remove-song/:songId', playlistController.removeSongFromPlaylist);
-
-// Delete playlist
-router.delete('/:playlistId', playlistController.deletePlaylist);
-
-// Update playlist (name, description)
-router.put('/:playlistId', playlistController.updatePlaylist);
+router.post('/create', playlistCreate, playlistController.createPlaylist);
+router.post('/:playlistId/add-song', playlistIdParam, addSongToPlaylist, playlistController.addSongToPlaylist);
+router.delete('/:playlistId/remove-song/:songId', playlistSongParams, playlistController.removeSongFromPlaylist);
+router.delete('/:playlistId', playlistIdParam, playlistController.deletePlaylist);
+router.put('/:playlistId', playlistIdParam, playlistUpdate, playlistController.updatePlaylist);
 
 module.exports = router;

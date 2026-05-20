@@ -1,14 +1,9 @@
 const { pool } = require('../database');
 
-/**
- * GET /api/playlists
- * Get all playlists for the authenticated user
- */
 exports.getUserPlaylists = async (req, res) => {
   try {
     const userEmail = req.user.email;
 
-    // Get playlists with song count
     const playlistsResult = await pool.query(`
       SELECT 
         p.id,
@@ -23,7 +18,6 @@ exports.getUserPlaylists = async (req, res) => {
       ORDER BY p.created_at DESC
     `, [userEmail]);
 
-    // Get songs for each playlist
     const playlists = [];
     for (const playlist of playlistsResult.rows) {
       const songsResult = await pool.query(`
@@ -38,7 +32,7 @@ exports.getUserPlaylists = async (req, res) => {
         name: playlist.name,
         description: playlist.description,
         createdAt: playlist.created_at,
-        songCount: parseInt(playlist.song_count),
+        songCount: parseInt(playlist.song_count, 10),
         songs: songsResult.rows.map(song => ({
           videoId: song.video_id,
           title: song.title,
@@ -55,24 +49,16 @@ exports.getUserPlaylists = async (req, res) => {
   }
 };
 
-/**
- * POST /api/playlists/create
- * Create a new playlist
- */
 exports.createPlaylist = async (req, res) => {
   try {
-    const { name, description = '' } = req.body;
+    const { name, description = '' } = req.validated;
     const userEmail = req.user.email;
-
-    if (!name || name.trim().length === 0) {
-      return res.status(400).json({ error: 'Playlist name is required' });
-    }
 
     const result = await pool.query(`
       INSERT INTO playlists (user_email, name, description)
       VALUES ($1, $2, $3)
       RETURNING id, name, description, created_at
-    `, [userEmail, name.trim(), description.trim()]);
+    `, [userEmail, name, description || '']);
 
     const playlist = result.rows[0];
     res.json({
@@ -91,21 +77,11 @@ exports.createPlaylist = async (req, res) => {
   }
 };
 
-/**
- * POST /api/playlists/:playlistId/add-song
- * Add a song to a playlist
- */
 exports.addSongToPlaylist = async (req, res) => {
   try {
-    const { playlistId } = req.params;
-    const { videoId, title, artist } = req.body;
+    const { playlistId, videoId, title, artist } = req.validated;
     const userEmail = req.user.email;
 
-    if (!videoId || !title || !artist) {
-      return res.status(400).json({ error: 'videoId, title, and artist are required' });
-    }
-
-    // Verify playlist belongs to user
     const playlistCheck = await pool.query(`
       SELECT id FROM playlists WHERE id = $1 AND user_email = $2
     `, [playlistId, userEmail]);
@@ -114,7 +90,6 @@ exports.addSongToPlaylist = async (req, res) => {
       return res.status(404).json({ error: 'Playlist not found' });
     }
 
-    // Check if song already exists in playlist
     const existingCheck = await pool.query(`
       SELECT id FROM playlist_songs WHERE playlist_id = $1 AND video_id = $2
     `, [playlistId, videoId]);
@@ -123,7 +98,6 @@ exports.addSongToPlaylist = async (req, res) => {
       return res.status(400).json({ error: 'Song already exists in playlist' });
     }
 
-    // Add song to playlist
     await pool.query(`
       INSERT INTO playlist_songs (playlist_id, video_id, title, artist)
       VALUES ($1, $2, $3, $4)
@@ -136,16 +110,11 @@ exports.addSongToPlaylist = async (req, res) => {
   }
 };
 
-/**
- * DELETE /api/playlists/:playlistId/remove-song/:songId
- * Remove a song from a playlist
- */
 exports.removeSongFromPlaylist = async (req, res) => {
   try {
-    const { playlistId, songId } = req.params;
+    const { playlistId, songId } = req.validated;
     const userEmail = req.user.email;
 
-    // Verify playlist belongs to user
     const playlistCheck = await pool.query(`
       SELECT id FROM playlists WHERE id = $1 AND user_email = $2
     `, [playlistId, userEmail]);
@@ -154,7 +123,6 @@ exports.removeSongFromPlaylist = async (req, res) => {
       return res.status(404).json({ error: 'Playlist not found' });
     }
 
-    // Remove song from playlist
     const result = await pool.query(`
       DELETE FROM playlist_songs 
       WHERE playlist_id = $1 AND id = $2
@@ -171,16 +139,11 @@ exports.removeSongFromPlaylist = async (req, res) => {
   }
 };
 
-/**
- * DELETE /api/playlists/:playlistId
- * Delete a playlist
- */
 exports.deletePlaylist = async (req, res) => {
   try {
-    const { playlistId } = req.params;
+    const { playlistId } = req.validated;
     const userEmail = req.user.email;
 
-    // Delete playlist (cascade will handle playlist_songs)
     const result = await pool.query(`
       DELETE FROM playlists WHERE id = $1 AND user_email = $2
     `, [playlistId, userEmail]);
@@ -196,26 +159,17 @@ exports.deletePlaylist = async (req, res) => {
   }
 };
 
-/**
- * PUT /api/playlists/:playlistId
- * Update playlist name and description
- */
 exports.updatePlaylist = async (req, res) => {
   try {
-    const { playlistId } = req.params;
-    const { name, description } = req.body;
+    const { playlistId, name, description = '' } = req.validated;
     const userEmail = req.user.email;
-
-    if (!name || name.trim().length === 0) {
-      return res.status(400).json({ error: 'Playlist name is required' });
-    }
 
     const result = await pool.query(`
       UPDATE playlists 
       SET name = $1, description = $2
       WHERE id = $3 AND user_email = $4
       RETURNING id, name, description, created_at
-    `, [name.trim(), description?.trim() || '', playlistId, userEmail]);
+    `, [name, description || '', playlistId, userEmail]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Playlist not found' });

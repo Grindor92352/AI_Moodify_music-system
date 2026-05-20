@@ -1,55 +1,62 @@
-const jwt = require('jsonwebtoken');
-const { getDb } = require('../database');
+const {
+  ACCESS_COOKIE,
+  REFRESH_COOKIE,
+  clearAuthCookies,
+  verifyAccessToken,
+  rotateSession
+} = require('../services/authTokenService');
+const { loadUserProfile } = require('../services/userService');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'moodify_super_secret_key_123';
-const COOKIE_NAME = 'jwt_token';
-const CLEAR_COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax'
-};
-
-function clearAuthCookie(res) {
-  res.clearCookie(COOKIE_NAME, CLEAR_COOKIE_OPTIONS);
+async function attachUser(req, email) {
+  const profile = await loadUserProfile(email);
+  if (!profile) {
+    return null;
+  }
+  req.user = profile;
+  return profile;
 }
 
 async function requireAuth(req, res, next) {
-  const token = req.cookies?.[COOKIE_NAME];
-  if (!token) {
+  const accessToken = req.cookies?.[ACCESS_COOKIE];
+  const legacyToken = req.cookies?.jwt_token;
+
+  if (accessToken) {
+    try {
+      const decoded = verifyAccessToken(accessToken);
+      const profile = await attachUser(req, decoded.email);
+      if (!profile) {
+        clearAuthCookies(res);
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+      return next();
+    } catch (err) {
+      if (err.name !== 'TokenExpiredError') {
+        clearAuthCookies(res);
+        return res.status(401).json({ error: 'Invalid or expired token' });
+      }
+    }
+  } else if (legacyToken) {
+    clearAuthCookies(res);
+    return res.status(401).json({ error: 'Session expired — please sign in again' });
+  }
+
+  const refreshToken = req.cookies?.[REFRESH_COOKIE];
+  if (!refreshToken) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    if (!decoded.email) {
-      clearAuthCookie(res);
-      return res.status(401).json({ error: 'Invalid or expired token' });
-    }
-
-    const db = await getDb();
-    const result = await db.query(
-      'SELECT email, name, age, preferred_singers FROM users WHERE email = $1',
-      [decoded.email]
-    );
-    const user = result.rows[0];
-
-    if (!user) {
-      clearAuthCookie(res);
+    const email = await rotateSession(res, refreshToken);
+    const profile = await attachUser(req, email);
+    if (!profile) {
+      clearAuthCookies(res);
       return res.status(401).json({ error: 'Not authenticated' });
     }
-
-    req.user = {
-      email: user.email,
-      name: user.name,
-      age: user.age,
-      preferredSingers: user.preferred_singers ? JSON.parse(user.preferred_singers) : []
-    };
-
     return next();
   } catch {
-    clearAuthCookie(res);
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    clearAuthCookies(res);
+    return res.status(401).json({ error: 'Not authenticated' });
   }
 }
 
-module.exports = { requireAuth, clearAuthCookie };
+module.exports = { requireAuth, clearAuthCookies };
