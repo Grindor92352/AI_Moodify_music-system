@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import MusicPlayer from '../components/MusicPlayer';
-import axios from 'axios';
+import api from '../api/client';
 import {
-  Heart, Download, ListMusic, Plus, Search,
-  Music2, Shuffle, Headphones, Star, Play, Wand2,
+  Heart, Download, ListMusic, Plus,
+  Music2, Headphones, Star, Play, Wand2,
   Trash2, X, Check
 } from 'lucide-react';
 
@@ -83,7 +83,7 @@ const LibraryPage: React.FC = () => {
   const loadUserPlaylists = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get('http://localhost:5000/api/playlists', { withCredentials: true });
+      const res = await api.get<{ playlists: Playlist[] }>('/api/playlists');
       setUserPlaylists(res.data.playlists || []);
     } catch (error) {
       console.error('Failed to load playlists:', error);
@@ -98,10 +98,10 @@ const LibraryPage: React.FC = () => {
 
     setIsCreating(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/playlists/create', {
+      const res = await api.post<{ playlist: Playlist }>('/api/playlists/create', {
         name: newPlaylistName.trim(),
         description: ''
-      }, { withCredentials: true });
+      });
 
       setUserPlaylists(prev => [res.data.playlist, ...prev]);
       setNewPlaylistName('');
@@ -118,7 +118,7 @@ const LibraryPage: React.FC = () => {
     if (!confirm('Are you sure you want to delete this playlist?')) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/playlists/${playlistId}`, { withCredentials: true });
+      await api.delete(`/api/playlists/${playlistId}`);
       setUserPlaylists(prev => prev.filter(p => p.id !== playlistId));
       if (selectedPlaylist && 'id' in selectedPlaylist && selectedPlaylist.id === playlistId) {
         setSelectedPlaylist(null);

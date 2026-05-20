@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react';
-import axios from 'axios';
+import api from '../api/client';
 import MusicPlayer from './MusicPlayer';
+import type { MusicAnalyzeResponse, MusicRefreshResponse } from '../types/music';
+import { getApiErrorMessage } from '../types/music';
 
 interface Song {
   videoId: string;
@@ -117,7 +119,7 @@ const TherapyDashboard: React.FC = () => {
       setStatusMsg('Analyzing your mood with AI…');
 
       // Step E: Send image to Node server, which forwards the request to the AI pipeline
-      const pyRes = await axios.post('/api/music/analyze', { image: base64Image });
+      const pyRes = await api.post<MusicAnalyzeResponse>('/api/music/analyze', { image: base64Image });
 
       if (pyRes.data.error) {
         throw new Error(pyRes.data.error);
@@ -131,7 +133,7 @@ const TherapyDashboard: React.FC = () => {
       setStatusMsg(`Detected: ${detectedMood}. Fetching playlist…`);
 
       // Step F: Fetch songs from Node backend for the detected mood
-      const res = await axios.post<MusicResponse>(`${API}/refresh`, { mood: detectedMood });
+      const res = await api.post<MusicRefreshResponse>(`${API}/refresh`, { mood: detectedMood });
       const { count } = applyMusicResponse(res.data, detectedMood);
 
       setStatusMsg(
@@ -140,10 +142,7 @@ const TherapyDashboard: React.FC = () => {
           : `Detected: ${detectedMood}. No tracks returned — keeping current playlist.`
       );
     } catch (err: unknown) {
-      const msg = axios.isAxiosError(err)
-        ? err.response?.data?.error ?? err.message
-        : 'Unexpected analysis error.';
-      setError(`Analysis failed: ${msg}`);
+      setError(`Analysis failed: ${getApiErrorMessage(err, 'Unexpected analysis error.')}`);
       stopCamera();
     } finally {
       setIsAnalyzing(false);
@@ -158,14 +157,11 @@ const TherapyDashboard: React.FC = () => {
     setError('');
 
     try {
-      const res = await axios.post<MusicResponse>(`${API}/refresh`, { mood: emotion });
+      const res = await api.post<MusicRefreshResponse>(`${API}/refresh`, { mood: emotion });
       const { count } = applyMusicResponse(res.data, emotion);
       setStatusMsg(`Refreshed! ${count} new tracks for "${emotion}".`);
     } catch (err: unknown) {
-      const msg = axios.isAxiosError(err)
-        ? err.response?.data?.error ?? err.message
-        : 'Refresh failed.';
-      setError(`Refresh error: ${msg}`);
+      setError(`Refresh error: ${getApiErrorMessage(err, 'Refresh failed.')}`);
     } finally {
       setIsRefreshing(false);
     }

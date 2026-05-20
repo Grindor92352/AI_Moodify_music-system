@@ -1,15 +1,36 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/client';
 import Sidebar from '../components/Sidebar';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
+import type { HistoryEntry, MusicAnalyzeResponse, MusicRefreshResponse, Song } from '../types/music';
+import { getApiErrorMessage } from '../types/music';
 import { Mic, Camera, Loader2, PlayCircle, Disc3, Sparkles, Headphones, Brain, Music } from 'lucide-react';
 
 // Extend Window interface for SpeechRecognition
+interface SpeechRecognitionResultEvent {
+  results: { 0: { 0: { transcript: string } } };
+}
+
+interface SpeechRecognitionErrorEvent {
+  error: string;
+}
+
+interface SpeechRecognitionInstance {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onstart: (() => void) | null;
+  onresult: ((event: SpeechRecognitionResultEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+}
+
 declare global {
   interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
+    SpeechRecognition?: new () => SpeechRecognitionInstance;
+    webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
   }
 }
 
@@ -50,8 +71,8 @@ const baseLofi = [
 ];
 
 // Helper to fill an array up to a certain count
-const fillTo50 = (baseArr: any[]) => {
-  const result: any[] = [];
+const fillTo50 = (baseArr: Song[]) => {
+  const result: Song[] = [];
   while(result.length < 50) {
     result.push(...baseArr);
   }
@@ -94,7 +115,7 @@ const DashboardPage: React.FC = () => {
         videoRef.current.srcObject = stream;
       }
       setCameraActive(true);
-    } catch (err) {
+    } catch {
       setError('Camera access denied or unavailable.');
     }
   };
@@ -129,29 +150,28 @@ const DashboardPage: React.FC = () => {
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
       const base64Image = canvas.toDataURL('image/jpeg', 0.85);
 
-      const res = await axios.post('/api/music/analyze', { image: base64Image });
+      const res = await api.post<MusicAnalyzeResponse>('/api/music/analyze', { image: base64Image });
 
       if (res.data.error) throw new Error(res.data.error);
 
       stopCamera();
 
-      // Hit node API to get songs for mood
-      const nodeRes = await axios.post('/api/music/refresh', { mood: res.data.mood || res.data.dominant_mood });
-      
-      // Save history to PostgreSQL database
-      await saveHistory(res.data.dominant_mood, nodeRes.data.songs, nodeRes.data.videoIds);
+      const mood = res.data.dominant_mood || res.data.mood || 'Happiness';
+      const nodeRes = await api.post<MusicRefreshResponse>('/api/music/refresh', { mood });
+
+      await saveHistory(mood, nodeRes.data.songs);
 
       navigate('/results', { 
         state: { 
-          mood: res.data.dominant_mood, 
+          mood, 
           image: base64Image,
           songs: nodeRes.data.songs,
           videoIds: nodeRes.data.videoIds
         } 
       });
 
-    } catch (err: any) {
-      setError(err.response?.data?.error || err.message || 'Analysis failed');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Analysis failed'));
       setLoading(false);
     }
   };
@@ -162,8 +182,8 @@ const DashboardPage: React.FC = () => {
     setError('');
 
     try {
-      const nodeRes = await axios.post('http://localhost:5000/api/music/refresh', { mood: moodText });
-      await saveHistory(moodText, nodeRes.data.songs, nodeRes.data.videoIds);
+      const nodeRes = await api.post<MusicRefreshResponse>('/api/music/refresh', { mood: moodText });
+      await saveHistory(moodText, nodeRes.data.songs);
 
       navigate('/results', {
         state: {
@@ -173,20 +193,19 @@ const DashboardPage: React.FC = () => {
           videoIds: nodeRes.data.videoIds
         }
       });
-    } catch (err: any) {
-      setError(err.response?.data?.error || err.message || 'Text analysis failed');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Text analysis failed'));
       setLoading(false);
     }
   };
 
-  const handlePlaylistClick = async (playlistName: string, defaultSongs?: any[]) => {
+  const handlePlaylistClick = async (playlistName: string, defaultSongs?: Song[]) => {
     if (playlistName === 'Recently Listened') {
       try {
-        const res = await axios.get('http://localhost:5000/api/history', { withCredentials: true });
+        const res = await api.get<{ history: HistoryEntry[] }>('/api/history');
         const history = res.data.history || [];
         if (history.length > 0) {
-          // Flatten all songs from the history entries into one list
-          const recentSongs = history.flatMap((h: any) => h.songs || []).slice(0, 20);
+          const recentSongs = history.flatMap((h) => h.songs || []).slice(0, 20);
           navigate('/results', { state: { mood: 'Recently Listened', image: null, songs: recentSongs } });
         } else {
           alert("You haven't played any songs yet! Listen to some tracks first.");
@@ -204,7 +223,7 @@ const DashboardPage: React.FC = () => {
          query = `Top songs by ${user.preferredSingers.join(' and ')}`;
       }
       
-      const nodeRes = await axios.post('http://localhost:5000/api/music/refresh', { mood: query });
+      const nodeRes = await api.post<MusicRefreshResponse>('/api/music/refresh', { mood: query });
       // We explicitly DO NOT call saveHistory here, as per user request to only save camera/text/voice.
       
       navigate('/results', {
@@ -215,7 +234,7 @@ const DashboardPage: React.FC = () => {
           videoIds: nodeRes.data.videoIds
         }
       });
-    } catch (err: any) {
+    } catch {
       // Fallback to mock data if the API rate limits or fails
       navigate('/results', {
         state: {
@@ -245,12 +264,12 @@ const DashboardPage: React.FC = () => {
       setIsListening(true);
     };
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionResultEvent) => {
       const transcript = event.results[0][0].transcript;
       setMoodText(transcript);
     };
 
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       setError('Speech recognition error: ' + event.error);
       setIsListening(false);
     };
@@ -262,18 +281,18 @@ const DashboardPage: React.FC = () => {
     recognition.start();
   };
 
-  const saveHistory = async (mood: string, songs: any[], videoIds?: string[]) => {
+  const saveHistory = async (mood: string, songs: Song[]) => {
     try {
-      await axios.post('http://localhost:5000/api/history/save', { mood, songs, videoIds }, { withCredentials: true });
-    } catch (err) {
+      await api.post('/api/history/save', { mood, songs });
+    } catch {
       // Fallback to localStorage if DB save fails (e.g. user not logged in)
       const history = JSON.parse(localStorage.getItem('moodify_history') || '[]');
-      history.unshift({ id: Date.now(), date: new Date().toLocaleString(), mood, songs, videoIds, tracks: songs?.length || 0 });
+      history.unshift({ id: Date.now(), date: new Date().toLocaleString(), mood, songs, tracks: songs?.length || 0 });
       localStorage.setItem('moodify_history', JSON.stringify(history.slice(0, 50)));
     }
   };
 
-  const useQuickMood = (mood: string) => {
+  const selectQuickMood = (mood: string) => {
     setMoodText(mood);
     setError('');
   };
@@ -365,7 +384,7 @@ const DashboardPage: React.FC = () => {
                         <button
                           key={mood}
                           type="button"
-                          onClick={() => useQuickMood(mood)}
+                          onClick={() => selectQuickMood(mood)}
                           className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
                             moodText === mood
                               ? 'border-emerald-400/40 bg-emerald-400/15 text-emerald-200'

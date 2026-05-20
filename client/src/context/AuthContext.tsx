@@ -1,26 +1,25 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api, { refreshSession } from '../api/client';
+import { AuthContext, type User } from './authContextValue';
 
-// Ensure all Axios requests send and receive cookies automatically
-axios.defaults.withCredentials = true;
-
-interface User {
-  email: string;
-  name?: string;
-  age?: number;
-  preferredSingers?: string[];
+function stripValidFlag(data: User & { valid?: boolean }): User {
+  const { valid: _omit, ...profile } = data;
+  void _omit;
+  return profile;
 }
 
-interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  login: () => Promise<void>;
-  logout: () => void;
+async function fetchCurrentUser(): Promise<User | null> {
+  try {
+    const res = await api.get<User & { valid?: boolean }>('/api/verify');
+    return stripValidFlag(res.data);
+  } catch {
+    const refreshed = await refreshSession();
+    if (!refreshed) return null;
+    const res = await api.get<User & { valid?: boolean }>('/api/verify');
+    return stripValidFlag(res.data);
+  }
 }
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -30,10 +29,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const verifySession = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/verify');
-        setUser(res.data);
-      } catch (error) {
-        setUser(null);
+        const profile = await fetchCurrentUser();
+        setUser(profile);
       } finally {
         setIsLoading(false);
       }
@@ -43,14 +40,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async () => {
-    const res = await axios.get('http://localhost:5000/api/verify');
-    setUser(res.data);
+    const profile = await fetchCurrentUser();
+    setUser(profile);
     navigate('/dashboard');
   };
 
   const logout = async () => {
     try {
-      await axios.post('http://localhost:5000/api/logout');
+      await api.post('/api/logout');
     } catch (e) {
       console.error('Logout request failed', e);
     } finally {
@@ -64,10 +61,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
-  return context;
 };

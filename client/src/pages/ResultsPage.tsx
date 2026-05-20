@@ -1,28 +1,35 @@
 import React, { useState } from 'react';
 import { useLocation, Link, Navigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/client';
 import Sidebar from '../components/Sidebar';
 import MusicPlayer from '../components/MusicPlayer';
-import { ArrowLeft, Play, BookmarkPlus, Disc3, Image as ImageIcon, RefreshCcw } from 'lucide-react';
+import type { MusicRefreshResponse, Song } from '../types/music';
+import { ArrowLeft, Disc3, RefreshCcw } from 'lucide-react';
 
-const mockSongs = [
-  { id: 'xGerv5FOk', title: 'Tum Hi Ho', artist: 'Arijit Singh' },
-  { id: 'BddP6PYo2gs', title: 'Channa Mereya', artist: 'Arijit Singh' },
-  { id: 'jfKfPfyJRdk', title: 'Kabira', artist: 'Tochi Raina, Rekha Bhardwaj' },
-  { id: '5qap5aO4i9A', title: 'Iktara', artist: 'Kavita Seth, Amitabh Bhattacharya' }
+const mockSongs: Song[] = [
+  { videoId: 'xGerv5FOk', title: 'Tum Hi Ho', artist: 'Arijit Singh' },
+  { videoId: 'BddP6PYo2gs', title: 'Channa Mereya', artist: 'Arijit Singh' },
+  { videoId: 'jfKfPfyJRdk', title: 'Kabira', artist: 'Tochi Raina, Rekha Bhardwaj' },
+  { videoId: '5qap5aO4i9A', title: 'Iktara', artist: 'Kavita Seth, Amitabh Bhattacharya' }
 ];
 
 const ResultsPage: React.FC = () => {
   const location = useLocation();
-  const { mood, image, songs, videoIds } = location.state || {};
-  const [localSongs, setLocalSongs] = useState(songs);
-  const [localVideoIds, setLocalVideoIds] = useState(videoIds);
+  const { mood, image, songs, videoIds } = (location.state || {}) as {
+    mood?: string;
+    image?: string | null;
+    songs?: Song[];
+    videoIds?: string[];
+  };
+  const [localSongs, setLocalSongs] = useState<Song[] | undefined>(songs);
+  const [localVideoIds, setLocalVideoIds] = useState<string[] | undefined>(videoIds);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
+    if (!mood) return;
     setIsRefreshing(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/music/refresh', { mood });
+      const res = await api.post<MusicRefreshResponse>('/api/music/refresh', { mood });
       setLocalSongs(res.data.songs);
       setLocalVideoIds(res.data.videoIds);
     } catch (err) {
@@ -35,6 +42,10 @@ const ResultsPage: React.FC = () => {
   if (!mood) {
     return <Navigate to="/dashboard" replace />;
   }
+
+  const fallbackVideoIds = localVideoIds?.length
+    ? localVideoIds
+    : mockSongs.map(s => s.videoId);
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#050505] selection:bg-white/20 animate-fade-in-up">
@@ -101,7 +112,7 @@ const ResultsPage: React.FC = () => {
               </div>
 
               <div className="flex-1 custom-scrollbar overflow-y-auto pr-2">
-                <MusicPlayer songs={localSongs} videoIds={localVideoIds || mockSongs.map(s => s.id.toString())} />
+                <MusicPlayer songs={localSongs} videoIds={fallbackVideoIds} />
               </div>
             </div>
           </div>

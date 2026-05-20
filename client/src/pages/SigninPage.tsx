@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
+import api from '../api/client';
+import { useAuth } from '../hooks/useAuth';
+import { getApiErrorMessage } from '../types/music';
 import { Mail, Lock, Music2, ArrowRight } from 'lucide-react';
 
 const SigninPage: React.FC = () => {
@@ -16,10 +17,10 @@ const SigninPage: React.FC = () => {
     setError('');
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/login', { email, password });
+      await api.post('/api/login', { email, password });
       await login(); // The cookie is automatically stored; verify before routing.
-    } catch (err: any) {
-      setError(err.response?.data?.error || err.message || 'Login failed');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Login failed'));
     } finally {
       setLoading(false);
     }

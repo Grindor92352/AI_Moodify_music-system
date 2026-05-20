@@ -1,17 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../api/client';
 import Sidebar from '../components/Sidebar';
 import MusicPlayer from '../components/MusicPlayer';
-import { Calendar, Smile, Inbox, Trash2, ChevronDown, ChevronUp, Music2, Clock } from 'lucide-react';
-
-interface HistoryEntry {
-  id: number;
-  date: string;
-  mood: string;
-  tracks: number;
-  songs?: any[];
-  videoIds?: string[];
-}
+import type { HistoryEntry } from '../types/music';
+import { Smile, Inbox, Trash2, ChevronDown, ChevronUp, Music2, Clock } from 'lucide-react';
 
 const moodColors: Record<string, { bg: string; border: string; text: string; glow: string }> = {
   Happiness:  { bg: 'rgba(234,179,8,0.12)',   border: 'rgba(234,179,8,0.3)',   text: '#fbbf24', glow: 'rgba(234,179,8,0.25)' },
@@ -34,7 +26,7 @@ const HistoryPage: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/history', { withCredentials: true });
+        const res = await api.get<{ history: HistoryEntry[] }>('/api/history');
         setHistory(res.data.history || []);
       } catch {
         // fallback to localStorage

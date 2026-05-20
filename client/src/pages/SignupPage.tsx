@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/client';
 import { Mail, Lock, Check, ArrowRight, ArrowLeft } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
+import { getApiErrorMessage } from '../types/music';
 
 const SINGER_OPTIONS = [
   { id: 'arijit', name: 'Arijit Singh', img: 'https://i.scdn.co/image/ab6761610000e5eb0261696c5df3be99da6ed3f3' },
@@ -43,16 +44,17 @@ const SignupPage: React.FC = () => {
     setError('');
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/signup', { 
+      const parsedAge = age.trim() ? parseInt(age, 10) : undefined;
+      await api.post('/api/signup', { 
         email, 
         password,
-        name,
-        age: parseInt(age),
+        name: name.trim() || undefined,
+        ...(parsedAge !== undefined && !Number.isNaN(parsedAge) ? { age: parsedAge } : {}),
         preferredSingers
       });
       await login();
-    } catch (err: any) {
-      setError(err.response?.data?.error || err.message || 'Signup failed');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Signup failed'));
       setStep(1);
     } finally {
       setLoading(false);

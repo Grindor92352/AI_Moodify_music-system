@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api/client';
+import type { Song } from '../types/music';
 import { Play, BookmarkPlus, BookmarkCheck, X, Plus, ListMusic } from 'lucide-react';
-
-interface Song {
-  videoId: string;
-  title: string;
-  artist: string;
-}
 
 interface Playlist {
   id: number;
@@ -28,7 +23,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ videoIds, songs }) => {
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('moodify_saved_songs') || '[]');
-    setSavedIds(new Set(saved.map((s: any) => s.videoId)));
+    setSavedIds(new Set(saved.map((s: Song) => s.videoId)));
   }, []);
 
   const displayList: Song[] = songs && songs.length > 0
@@ -38,7 +33,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ videoIds, songs }) => {
   const loadUserPlaylists = async () => {
     setIsLoadingPlaylists(true);
     try {
-      const res = await axios.get('http://localhost:5000/api/playlists', { withCredentials: true });
+      const res = await api.get<{ playlists: Playlist[] }>('/api/playlists');
       setUserPlaylists(res.data.playlists || []);
     } catch (error) {
       console.error('Failed to load playlists:', error);
@@ -50,11 +45,11 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ videoIds, songs }) => {
 
   const addToPlaylist = async (playlistId: number, song: Song) => {
     try {
-      await axios.post(`http://localhost:5000/api/playlists/${playlistId}/add-song`, {
+      await api.post(`/api/playlists/${playlistId}/add-song`, {
         videoId: song.videoId,
         title: song.title,
         artist: song.artist,
-      }, { withCredentials: true });
+      });
 
       setShowPlaylistModal(null);
 
@@ -104,7 +99,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ videoIds, songs }) => {
     // Add to recently played history
     try {
       const recentList = JSON.parse(localStorage.getItem('moodify_recently_played') || '[]');
-      const filteredList = recentList.filter((s: any) => s.videoId !== song.videoId);
+      const filteredList = recentList.filter((s: Song) => s.videoId !== song.videoId);
       filteredList.unshift(song);
       localStorage.setItem('moodify_recently_played', JSON.stringify(filteredList.slice(0, 50)));
     } catch (e) {
