@@ -282,7 +282,7 @@ function getLibraryKey(input) {
  * Returns 4 song objects for the given mood.
  * Tries YouTube Data API first, falls back to static library on error.
  */
-exports.getVideosForMood = async (dominantMood) => {
+exports.getVideosForMood = async (dominantMood, limit = 4) => {
   const key = getLibraryKey(dominantMood);
   const apiKey = process.env.YOUTUBE_API_KEY;
   const query = PLAYLIST_QUERIES[key] || MOOD_QUERIES[key] || `${dominantMood} song official audio -shorts`;
@@ -301,7 +301,7 @@ exports.getVideosForMood = async (dominantMood) => {
 
   if (!apiKey) {
     console.warn('[YouTube] Warning: YOUTUBE_API_KEY is missing. Using static fallback.');
-    return getStaticFallback(key);
+    return getStaticFallback(key, limit);
   }
 
   try {
@@ -323,14 +323,14 @@ exports.getVideosForMood = async (dominantMood) => {
     const items = response.data.items || [];
     if (items.length === 0) {
       console.warn('[YouTube API] No results found. Falling back to last successful playlist or static curated library.');
-      return lastSuccessful || getStaticFallback(key);
+      return lastSuccessful || getStaticFallback(key, limit);
     }
 
     const songs = shuffle(items.map(item => ({
       videoId: item.id.videoId,
       title: item.snippet.title,
       artist: item.snippet.channelTitle
-    }))).slice(0, 4);
+    }))).slice(0, limit);
 
     _setCachedQuery(key, query, songs);
     _setLastSuccessfulMood(key, songs);
@@ -338,14 +338,14 @@ exports.getVideosForMood = async (dominantMood) => {
   } catch (error) {
     console.error(`[YouTube API] Error: ${error.response?.data?.error?.message || error.message}`);
     console.log('[YouTube API] Falling back to last successful playlist or static curated library.');
-    return lastSuccessful || getStaticFallback(key);
+    return lastSuccessful || getStaticFallback(key, limit);
   }
 };
 
 /**
  * Returns a shuffled slice from the static fallback library.
  */
-function getStaticFallback(key) {
+function getStaticFallback(key, limit = 4) {
   const pool = PLAYLIST_LIBRARY[key] || BOLLYWOOD_LIBRARY[key] || BOLLYWOOD_LIBRARY['happiness'];
-  return shuffle([...pool]).slice(0, 4);
+  return shuffle([...pool]).slice(0, limit);
 }

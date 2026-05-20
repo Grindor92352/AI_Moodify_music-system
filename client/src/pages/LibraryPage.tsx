@@ -3,7 +3,7 @@ import Sidebar from '../components/Sidebar';
 import MusicPlayer from '../components/MusicPlayer';
 import api from '../api/client';
 import {
-  Heart, Download, ListMusic, Plus,
+  Download, ListMusic, Plus,
   Music2, Headphones, Star, Play, Wand2,
   Trash2, X, Check
 } from 'lucide-react';
@@ -59,11 +59,10 @@ const suggestedPlaylists: SuggestedPlaylist[] = [
   },
 ];
 
-type Tab = 'saved' | 'playlists' | 'downloads';
+type Tab = 'playlists' | 'downloads';
 
 const LibraryPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<Tab>('saved');
-  const [savedSongs, setSavedSongs] = useState<Song[]>([]);
+  const [activeTab, setActiveTab] = useState<Tab>('playlists');
   const [userPlaylists, setUserPlaylists] = useState<Playlist[]>([]);
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | SuggestedPlaylist | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -72,9 +71,6 @@ const LibraryPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('moodify_saved_songs');
-    if (saved) setSavedSongs(JSON.parse(saved));
-
     if (activeTab === 'playlists') {
       loadUserPlaylists();
     }
@@ -130,7 +126,6 @@ const LibraryPage: React.FC = () => {
   };
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: 'saved', label: 'Saved Songs', icon: <Heart size={16} /> },
     { key: 'playlists', label: 'Your Playlists', icon: <ListMusic size={16} /> },
     { key: 'downloads', label: 'Downloads', icon: <Download size={16} /> },
   ];
@@ -162,35 +157,7 @@ const LibraryPage: React.FC = () => {
             ))}
           </div>
 
-          {activeTab === 'saved' && (
-            <div>
-              {savedSongs.length === 0 ? (
-                <div className="text-center py-20 rounded-3xl border border-white/5 bg-white/2">
-                  <div className="w-16 h-16 rounded-2xl bg-white/4 border border-white/7 flex items-center justify-center mx-auto mb-5 text-neutral-600">
-                    <Heart size={28} />
-                  </div>
-                  <h2 className="text-lg font-bold mb-2">No saved songs yet</h2>
-                  <p className="text-neutral-600 text-sm max-w-xs mx-auto">Heart a track in the Results page to save it here.</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {savedSongs.map((song, i) => (
-                    <div key={song.videoId} className="group flex items-center gap-4 px-5 py-3.5 rounded-2xl border border-transparent hover:bg-white/4 hover:border-white/7 transition-all">
-                      <span className="text-neutral-700 text-sm w-6 text-right shrink-0 tabular-nums group-hover:hidden">{i + 1}</span>
-                      <Play size={14} className="text-indigo-400 hidden group-hover:block w-6 shrink-0" />
-                      <div className="w-10 h-10 rounded-xl bg-linear-to-br from-indigo-500/20 to-violet-500/20 border border-white/7 flex items-center justify-center shrink-0">
-                        <Music2 size={16} className="text-indigo-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm font-semibold truncate">{song.title}</p>
-                        <p className="text-neutral-600 text-xs truncate">{song.artist}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          
 
           {activeTab === 'playlists' && !selectedPlaylist && (
             <div>

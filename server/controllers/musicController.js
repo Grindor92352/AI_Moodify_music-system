@@ -46,7 +46,8 @@ exports.refreshPlaylist = async (req, res) => {
 exports.getTrendingSongs = async (req, res) => {
   try {
     const query = String(req.query.query || 'trending songs official audio').trim();
-    const songs = await youtubeService.getVideosForMood(query);
+    // Request a larger set for the Trending page so the client can paginate/infinite-scroll
+    const songs = await youtubeService.getVideosForMood(query, 30);
 
     return res.json({
       query,

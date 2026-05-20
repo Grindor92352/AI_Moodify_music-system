@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
 import type { Song } from '../types/music';
 import { api } from '../api/client';
@@ -9,9 +9,11 @@ const DEFAULT_QUERY = 'trending songs official audio';
 const TrendingPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [songs, setSongs] = useState<Song[]>([]);
+  const [visibleCount, setVisibleCount] = useState(9);
   const [previewSong, setPreviewSong] = useState<Song | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const loadTrendingSongs = useCallback(async (query: string) => {
     setIsLoading(true);
@@ -22,6 +24,7 @@ const TrendingPage: React.FC = () => {
         params: { query: query.trim() || DEFAULT_QUERY }
       });
       setSongs(response.data.songs || []);
+      setVisibleCount(9);
     } catch (err) {
       console.error('[TrendingPage] Failed to load songs:', err);
       setError('Unable to load trending songs right now. Please try again later.');
@@ -34,6 +37,25 @@ const TrendingPage: React.FC = () => {
   useEffect(() => {
     loadTrendingSongs(DEFAULT_QUERY);
   }, [loadTrendingSongs]);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setVisibleCount((v) => {
+            if (v >= songs.length) return v;
+            return Math.min(songs.length, v + 9);
+          });
+        }
+      });
+    }, { root: null, rootMargin: '200px', threshold: 0.1 });
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [songs.length]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -112,7 +134,7 @@ const TrendingPage: React.FC = () => {
             ) : null}
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {songs.length > 0 ? songs.map((song, index) => (
+              {songs.length > 0 ? songs.slice(0, visibleCount).map((song, index) => (
                 <button
                   key={`${song.videoId}-${index}`}
                   onClick={() => setPreviewSong(song)}
@@ -139,6 +161,21 @@ const TrendingPage: React.FC = () => {
                 </div>
               )}
             </div>
+
+            <div className="mt-6 flex items-center justify-center">
+              {visibleCount < songs.length ? (
+                <button
+                  onClick={() => setVisibleCount((v) => Math.min(songs.length, v + 9))}
+                  className="rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm text-neutral-300 hover:bg-white/[0.06]"
+                >
+                  Load more
+                </button>
+              ) : (
+                songs.length > 0 && <div className="text-xs text-neutral-500">No more songs</div>
+              )}
+            </div>
+
+            <div ref={sentinelRef} />
           </section>
 
           {previewSong && (

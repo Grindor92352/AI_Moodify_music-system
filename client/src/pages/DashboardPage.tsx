@@ -300,7 +300,7 @@ const DashboardPage: React.FC = () => {
     <div className="flex h-screen overflow-hidden bg-[#050505] selection:bg-white/20 text-white animate-fade-in-up">
       {isFetchingPlaylist && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
-          <div className="flex flex-col items-center rounded-2xl border border-white/[0.08] bg-neutral-950 px-8 py-7 shadow-2xl">
+          <div className="flex flex-col items-center rounded-2xl border border-white/8 bg-neutral-950 px-8 py-7 shadow-2xl">
              <div className="mb-4 h-10 w-10 rounded-full border-4 border-white/15 border-t-white animate-spin" />
              <h2 className="text-sm font-bold text-white tracking-[0.2em] uppercase">Curating Playlist</h2>
           </div>
@@ -309,12 +309,12 @@ const DashboardPage: React.FC = () => {
 
       <Sidebar />
       <main className="min-h-0 flex-1 overflow-y-auto custom-scrollbar">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-7 lg:px-10 lg:py-9">
-          <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-6 lg:px-8 lg:py-7">
+          <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-emerald-400">Dashboard</p>
-              <h1 className="text-3xl font-extrabold tracking-tight text-white lg:text-5xl">Good to see you, {firstName}</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400 lg:text-base">
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-400">Dashboard</p>
+              <h1 className="text-3xl font-extrabold tracking-tight text-white lg:text-4xl">Good to see you, {firstName}</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
                 Check your mood, describe what you need, or open a playlist. Everything here should move you toward music, not clutter the page.
               </p>
               {savedCount > 0 && (
@@ -325,16 +325,16 @@ const DashboardPage: React.FC = () => {
             </div>
             <button
               onClick={() => document.getElementById('mood-input')?.focus()}
-              className="inline-flex w-fit items-center gap-2 rounded-xl border border-white/[0.08] bg-white px-4 py-3 text-sm font-bold text-black transition-all hover:bg-neutral-200"
+              className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-100 transition-all hover:bg-emerald-500/20"
             >
-              <Sparkles size={16} />
+              <Sparkles size={15} />
               Quick Mood
             </button>
           </header>
 
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-            <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-neutral-950 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+            <section className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/8 bg-neutral-950 shadow-xl">
+              <div className="flex items-center justify-between border-b border-white/[0.07] px-6 py-5">
                 <div>
                   <h2 className="text-lg font-bold text-white">Mood Check</h2>
                   <p className="mt-1 text-xs text-neutral-500">Use camera, voice, or text to create a playlist.</p>
@@ -344,8 +344,8 @@ const DashboardPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-5 p-5">
-                <div className="relative aspect-video max-h-[420px] overflow-hidden rounded-xl border border-white/[0.08] bg-black">
+              <div className="flex flex-col gap-5 p-5 flex-1">
+                <div className="relative aspect-5/4 min-h-72 overflow-hidden rounded-2xl border border-white/8 bg-black">
                   {error && <div className="absolute left-4 right-4 top-4 z-10 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">{error}</div>}
                   
                   <video 
@@ -364,7 +364,7 @@ const DashboardPage: React.FC = () => {
                       </div>
                       <p className="text-base font-bold text-white">Visual mood scan</p>
                       <p className="mt-2 max-w-sm text-sm leading-6 text-neutral-500">Turn on your camera, then take one snapshot. The app detects a mood and builds a playlist from it.</p>
-                      <div className="mt-5 grid w-full max-w-md grid-cols-3 gap-2">
+                      <div className="mt-5 grid w-full max-w-md grid-cols-3 gap-3">
                         <MiniStep icon={<Camera size={15} />} label="Capture" />
                         <MiniStep icon={<Brain size={15} />} label="Analyze" />
                         <MiniStep icon={<Music size={15} />} label="Play" />
@@ -380,9 +380,9 @@ const DashboardPage: React.FC = () => {
                   )}
                 </div>
 
-                <div className="flex flex-col gap-4 rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
+                <div className="flex flex-col gap-4 rounded-xl border border-white/7 bg-white/3 p-4">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-neutral-500">Text or Voice</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-500">Text or Voice</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {QUICK_MOODS.map(mood => (
                         <button
@@ -392,7 +392,7 @@ const DashboardPage: React.FC = () => {
                           className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
                             moodText === mood
                               ? 'border-emerald-400/40 bg-emerald-400/15 text-emerald-200'
-                              : 'border-white/[0.08] bg-white/[0.04] text-neutral-400 hover:bg-white/[0.08] hover:text-white'
+                              : 'border-white/8 bg-white/4 text-neutral-400 hover:bg-white/8 hover:text-white'
                           }`}
                         >
                           {mood}
@@ -413,7 +413,7 @@ const DashboardPage: React.FC = () => {
                         }
                       }}
                       placeholder="I feel calm but tired..."
-                      className="mt-3 min-h-24 w-full resize-none rounded-xl border border-white/[0.08] bg-black/40 px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-neutral-600 focus:border-emerald-400/50"
+                      className="mt-3 min-h-22 w-full resize-none rounded-xl border border-white/8 bg-black/40 px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-neutral-600 focus:border-emerald-400/50"
                     />
 
                   {detectedMood && (
@@ -433,7 +433,7 @@ const DashboardPage: React.FC = () => {
                         </button>
                         <button
                           onClick={() => setDetectedMood(null)}
-                          className="rounded-xl border border-white/[0.12] bg-white/[0.04] px-4 py-2 text-sm text-white transition hover:bg-white/[0.08]"
+                          className="rounded-xl border border-white/12 bg-white/4 px-4 py-2 text-sm text-white transition hover:bg-white/8"
                         >
                           Edit mood manually
                         </button>
@@ -442,10 +442,10 @@ const DashboardPage: React.FC = () => {
                   )}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 sm:max-w-md">
+                  <div className="grid grid-cols-3 gap-3 sm:max-w-md">
                     <button 
                       onClick={handleVoiceInput}
-                      className={`flex items-center justify-center rounded-xl border border-white/[0.08] py-3 transition-all ${isListening ? 'bg-red-500/15 text-red-300' : 'bg-white/[0.04] text-neutral-300 hover:bg-white/[0.08] hover:text-white'}`}
+                      className={`flex items-center justify-center rounded-xl border border-white/8 py-3 transition-all ${isListening ? 'bg-red-500/15 text-red-300' : 'bg-white/4 text-neutral-300 hover:bg-white/8 hover:text-white'}`}
                       title="Voice Input"
                     >
                       <Mic size={18} />
@@ -453,7 +453,7 @@ const DashboardPage: React.FC = () => {
                     <button 
                       onClick={handleTextAnalysis}
                       disabled={loading || !moodText.trim()}
-                      className="flex items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04] py-3 text-neutral-300 transition-all hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex items-center justify-center rounded-xl border border-white/8 bg-white/4 py-3 text-neutral-300 transition-all hover:bg-white/8 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                       title="Search via Text"
                     >
                       <PlayCircle size={18} />
@@ -472,16 +472,17 @@ const DashboardPage: React.FC = () => {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-white/[0.08] bg-neutral-950 p-5 shadow-2xl">
-              <div className="mb-5 flex items-center justify-between">
+            <section className="flex h-full flex-col rounded-2xl border border-white/8 bg-neutral-950 shadow-xl">
+              <div className="mb-4 flex items-center justify-between px-5 pt-5">
                 <div>
                   <h2 className="text-lg font-bold text-white">Playlists</h2>
-                  <p className="mt-1 text-xs text-neutral-500">Live search when available, category fallback otherwise.</p>
+                  <p className="mt-1 text-[11px] text-neutral-500">Live search when available, category fallback otherwise.</p>
                 </div>
-                <Headphones className="text-neutral-500" size={22} />
+                <Headphones className="text-neutral-500" size={20} />
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="flex-1 min-h-0 px-5 pb-5">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {user?.preferredSingers && user.preferredSingers.length > 0 && (
                   <PlaylistCard onClick={() => handlePlaylistClick('Your Favorites', mockCategories.explore)} title="Your Favorites" subtitle="Based on your top artists" gradient="from-amber-400 to-orange-500" glow="rgba(251,191,36,0.22)" />
                 )}
@@ -493,6 +494,7 @@ const DashboardPage: React.FC = () => {
                 <PlaylistCard onClick={() => handlePlaylistClick('Chill Vibes', mockCategories.chill)} title="Chill Vibes" subtitle="Soft, soothing music" gradient="from-emerald-400 to-teal-500" glow="rgba(52,211,153,0.22)" />
                 <PlaylistCard onClick={() => handlePlaylistClick('Study Focus', mockCategories.focus)} title="Study Focus" subtitle="Concentration and calm" gradient="from-violet-400 to-indigo-500" glow="rgba(129,140,248,0.22)" />
                 <PlaylistCard onClick={() => handlePlaylistClick('Romantic Evening', mockCategories.romantic)} title="Romantic Evening" subtitle="Love ballads and slow melodies" gradient="from-rose-400 to-pink-500" glow="rgba(251,146,255,0.22)" />
+                </div>
               </div>
             </section>
           </div>
@@ -514,7 +516,7 @@ const PlaylistCard = ({ title, subtitle, gradient, glow, onClick, span2 = false 
       onClick={onClick}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
-      className={`relative p-5 rounded-2xl border cursor-pointer overflow-hidden transition-all duration-300 ${span2 ? 'md:col-span-2' : ''}`}
+        className={`relative p-4 rounded-2xl border cursor-pointer overflow-hidden transition-all duration-300 ${span2 ? 'md:col-span-2' : ''}`}
       style={{
         borderColor: hov ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)',
         background: hov ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.02)',
@@ -523,11 +525,11 @@ const PlaylistCard = ({ title, subtitle, gradient, glow, onClick, span2 = false 
       }}
     >
       {/* Left accent bar */}
-      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-gradient-to-b ${gradient}`} style={{ opacity: hov ? 1 : 0.4 }} />
+      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-linear-to-b ${gradient}`} style={{ opacity: hov ? 1 : 0.4 }} />
       <div className="pl-3">
-        <h3 className="text-white font-bold text-base">{title}</h3>
-        <p className="text-neutral-500 text-xs mt-1">{subtitle}</p>
-        <div className={`mt-4 w-9 h-9 rounded-xl flex items-center justify-center text-white bg-gradient-to-br ${gradient} transition-all duration-300`}
+        <h3 className="text-white font-bold text-sm">{title}</h3>
+        <p className="text-neutral-400 text-[11px] mt-1">{subtitle}</p>
+        <div className={`mt-3 w-8 h-8 rounded-xl flex items-center justify-center text-white bg-linear-to-br ${gradient} transition-all duration-300`}
           style={{ boxShadow: hov ? `0 4px 15px ${glow}` : 'none' }}>
           <PlayCircle size={17} />
         </div>
@@ -540,9 +542,9 @@ const MiniStep = ({ icon, label }: {
   icon: React.ReactNode;
   label: string;
 }) => (
-  <div className="flex flex-col items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-3">
+  <div className="flex flex-col items-center gap-2 rounded-xl border border-white/7 bg-white/3 px-2 py-2">
     <div className="text-emerald-300">{icon}</div>
-    <span className="text-[11px] font-semibold text-neutral-400">{label}</span>
+    <span className="text-[10px] font-semibold text-neutral-400">{label}</span>
   </div>
 );
 

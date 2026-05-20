@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
 import type { Song } from '../types/music';
-import { Play, BookmarkPlus, BookmarkCheck, X, Plus, ListMusic } from 'lucide-react';
+import { Play, Heart, X, Plus, ListMusic } from 'lucide-react';
 
 interface Playlist {
   id: number;
@@ -158,10 +158,10 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ videoIds, songs }) => {
                 </button>
                 <button 
                   onClick={() => toggleSave(song)}
-                  className={`p-2 rounded-lg transition-colors ${isSaved ? 'text-purple-400 bg-purple-400/10' : 'text-neutral-400 hover:text-white hover:bg-neutral-800'}`}
-                  title="Save to Library"
+                  className={`p-2 rounded-lg transition-colors ${isSaved ? 'text-rose-400 bg-rose-400/10' : 'text-neutral-400 hover:text-white hover:bg-neutral-800'}`}
+                  title="Add to Favorites"
                 >
-                  {isSaved ? <BookmarkCheck size={18} /> : <BookmarkPlus size={18} />}
+                  <Heart size={18} />
                 </button>
               </div>
             </div>

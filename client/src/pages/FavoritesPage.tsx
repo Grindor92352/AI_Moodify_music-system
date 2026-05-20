@@ -102,9 +102,9 @@ const FavoritesPage: React.FC = () => {
               </div>
 
               {previewVideoId && (
-                <div className="rounded-3xl border border-white/[0.06] bg-neutral-950 p-4">
+                <div className="rounded-3xl border border-white/[0.06] bg-neutral-950 p-4 min-w-0">
                   <div className="mb-4 flex items-center justify-between gap-4">
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">Preview</p>
                       <h2 className="mt-2 text-lg font-semibold text-white truncate">{previewTitle}</h2>
                     </div>
