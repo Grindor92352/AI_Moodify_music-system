@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, History, Library, LogOut, Music2, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, History, Library, LogOut, Music2, TrendingUp, Heart } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 const navItems = [
@@ -24,6 +24,13 @@ const navItems = [
     icon: <History size={18} />,
     gradient: 'from-pink-500 to-rose-600',
     glow: 'rgba(236,72,153,0.4)',
+  },
+  {
+    name: 'Favorites',
+    path: '/favorites',
+    icon: <Heart size={18} />,
+    gradient: 'from-rose-400 to-pink-500',
+    glow: 'rgba(244,63,94,0.4)',
   },
   {
     name: 'Library',

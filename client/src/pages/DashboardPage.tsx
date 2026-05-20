@@ -101,8 +101,6 @@ const DashboardPage: React.FC = () => {
   const [moodText, setMoodText] = useState('');
   const [detectedMood, setDetectedMood] = useState<string | null>(null);
   const [savedCount, setSavedCount] = useState(0);
-  const [savedSongs, setSavedSongs] = useState<Song[]>([]);
-  const [previewVideoId, setPreviewVideoId] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [isFetchingPlaylist, setIsFetchingPlaylist] = useState(false);
   const { user } = useAuth();
@@ -295,31 +293,8 @@ const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('moodify_saved_songs') || '[]');
-    if (Array.isArray(saved)) {
-      setSavedSongs(saved);
-      setSavedCount(saved.length);
-    }
+    setSavedCount(Array.isArray(saved) ? saved.length : 0);
   }, []);
-
-  const openLibrary = () => {
-    navigate('/library');
-  };
-
-  const previewSavedSong = (song: Song) => {
-    setPreviewVideoId(song.videoId);
-  };
-
-  const playSavedSongs = () => {
-    if (!savedSongs.length) return;
-    navigate('/results', {
-      state: {
-        mood: 'Favorites',
-        image: null,
-        songs: savedSongs.slice(0, 20),
-        videoIds: savedSongs.map(song => song.videoId)
-      }
-    });
-  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#050505] selection:bg-white/20 text-white animate-fade-in-up">
@@ -518,89 +493,6 @@ const DashboardPage: React.FC = () => {
                 <PlaylistCard onClick={() => handlePlaylistClick('Chill Vibes', mockCategories.chill)} title="Chill Vibes" subtitle="Soft, soothing music" gradient="from-emerald-400 to-teal-500" glow="rgba(52,211,153,0.22)" />
                 <PlaylistCard onClick={() => handlePlaylistClick('Study Focus', mockCategories.focus)} title="Study Focus" subtitle="Concentration and calm" gradient="from-violet-400 to-indigo-500" glow="rgba(129,140,248,0.22)" />
                 <PlaylistCard onClick={() => handlePlaylistClick('Romantic Evening', mockCategories.romantic)} title="Romantic Evening" subtitle="Love ballads and slow melodies" gradient="from-rose-400 to-pink-500" glow="rgba(251,146,255,0.22)" />
-              </div>
-
-              <div className="mt-6 rounded-3xl border border-white/[0.08] bg-neutral-900/60 p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">Favorites</p>
-                    <h3 className="mt-2 text-lg font-semibold text-white">Saved song library</h3>
-                    <p className="mt-1 text-sm text-neutral-400">Quick access to the songs you’ve marked as favorites.</p>
-                  </div>
-                  <button
-                    onClick={openLibrary}
-                    className="rounded-xl border border-white/[0.08] bg-white/5 px-4 py-2 text-sm text-white transition hover:bg-white/[0.08]"
-                  >
-                    Open Library
-                  </button>
-                </div>
-                {savedSongs.length > 0 ? (
-                  <>
-                    <div className="mt-4 flex flex-wrap items-center gap-3">
-                      <button
-                        onClick={playSavedSongs}
-                        className="rounded-xl bg-emerald-400 px-4 py-2 text-sm font-semibold text-black transition hover:bg-emerald-300"
-                      >
-                        Play favorites
-                      </button>
-                      <button
-                        onClick={openLibrary}
-                        className="rounded-xl border border-white/[0.08] bg-white/5 px-4 py-2 text-sm text-white transition hover:bg-white/[0.08]"
-                      >
-                        Open Library
-                      </button>
-                    </div>
-                    <div className="mt-4 space-y-3">
-                      {savedSongs.slice(0, 3).map(song => (
-                        <div key={song.videoId} className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-black/50 p-3">
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-white truncate">{song.title}</p>
-                            <p className="text-xs text-neutral-500 truncate">{song.artist}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => previewSavedSong(song)}
-                              className="rounded-full border border-white/[0.08] bg-white/5 p-2 text-neutral-300 transition hover:bg-white/[0.08] hover:text-white"
-                            >
-                              Preview
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="mt-4 rounded-2xl border border-white/[0.06] bg-black/40 p-4 text-sm text-neutral-500">
-                    No favorite songs yet. Save any song from a playlist to see it here instantly.
-                  </div>
-                )}
-
-                {previewVideoId && (
-                  <div className="mt-5 rounded-3xl border border-white/[0.08] bg-neutral-950 p-4">
-                    <div className="flex items-center justify-between gap-4 mb-4">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">Favorite preview</p>
-                        <h3 className="mt-2 text-lg font-semibold text-white">
-                          {savedSongs.find((song) => song.videoId === previewVideoId)?.title || 'Preview'}
-                        </h3>
-                      </div>
-                      <button
-                        onClick={() => setPreviewVideoId(null)}
-                        className="rounded-xl border border-white/[0.08] px-3 py-2 text-sm text-neutral-300 hover:bg-white/[0.05] hover:text-white transition-all"
-                      >
-                        Close
-                      </button>
-                    </div>
-                    <div className="aspect-video overflow-hidden rounded-2xl bg-black">
-                      <iframe
-                        src={`https://www.youtube-nocookie.com/embed/${previewVideoId}?autoplay=1&controls=1&modestbranding=1`}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="w-full h-full border-0"
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
             </section>
           </div>

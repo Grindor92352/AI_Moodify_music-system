@@ -10,6 +10,7 @@ import DashboardPage from './pages/DashboardPage';
 import TrendingPage from './pages/TrendingPage';
 import ResultsPage from './pages/ResultsPage';
 import HistoryPage from './pages/HistoryPage';
+import FavoritesPage from './pages/FavoritesPage';
 import LibraryPage from './pages/LibraryPage';
 
 const CursorGlow = () => {
@@ -46,6 +47,7 @@ function App() {
             <Route path="/profile" element={<Navigate to="/dashboard" replace />} />
             <Route path="/results" element={<ResultsPage />} />
             <Route path="/history" element={<HistoryPage />} />
+            <Route path="/favorites" element={<FavoritesPage />} />
             <Route path="/library" element={<LibraryPage />} />
           </Route>
         </Routes>
