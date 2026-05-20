@@ -14,7 +14,7 @@ interface MusicResponse {
   songs?: Song[];
 }
 
-const API = 'http://localhost:5000/api/music';
+const API = '/api/music';
 
 const moodColors: Record<string, string> = {
   happiness: 'from-yellow-400 to-orange-400',
@@ -116,16 +116,14 @@ const TherapyDashboard: React.FC = () => {
       stopCamera();
       setStatusMsg('Analyzing your mood with AI…');
 
-      // Step E: Send directly to Python backend
-      const pyRes = await axios.post('http://localhost:8000/analyze-frame', { 
-        image_base64: base64Image 
-      });
+      // Step E: Send image to Node server, which forwards the request to the AI pipeline
+      const pyRes = await axios.post('/api/music/analyze', { image: base64Image });
 
       if (pyRes.data.error) {
         throw new Error(pyRes.data.error);
       }
 
-      const detectedMood = pyRes.data.dominant_mood;
+      const detectedMood = pyRes.data.mood || pyRes.data.dominant_mood;
       if (!detectedMood) {
         throw new Error('No mood detected from image.');
       }

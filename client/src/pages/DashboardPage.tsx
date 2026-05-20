@@ -63,10 +63,13 @@ const mockCategories = {
   explore: fillTo50([...baseHollywood, ...baseBollywood]).slice(0, 30),
   bollywood: fillTo50(baseBollywood),
   hollywood: fillTo50(baseHollywood),
-  lofi: fillTo50(baseLofi)
+  lofi: fillTo50(baseLofi),
+  chill: fillTo50(baseLofi).slice(0, 20),
+  focus: fillTo50(baseLofi).slice(0, 20),
+  romantic: fillTo50(baseBollywood).slice(0, 20)
 };
 
-const QUICK_MOODS = ['Happy', 'Calm', 'Sad', 'Anxious', 'Focused', 'Tired'];
+const QUICK_MOODS = ['Happy', 'Calm', 'Sad', 'Anxious', 'Focused', 'Tired', 'Relax', 'Party', 'Romantic', 'Nostalgic', 'Motivated', 'Chill'];
 
 const DashboardPage: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -126,16 +129,14 @@ const DashboardPage: React.FC = () => {
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
       const base64Image = canvas.toDataURL('image/jpeg', 0.85);
 
-      const res = await axios.post('http://localhost:8000/analyze-frame', { 
-        image_base64: base64Image 
-      });
+      const res = await axios.post('/api/music/analyze', { image: base64Image });
 
       if (res.data.error) throw new Error(res.data.error);
 
       stopCamera();
 
       // Hit node API to get songs for mood
-      const nodeRes = await axios.post('http://localhost:5000/api/music/refresh', { mood: res.data.dominant_mood });
+      const nodeRes = await axios.post('/api/music/refresh', { mood: res.data.mood || res.data.dominant_mood });
       
       // Save history to PostgreSQL database
       await saveHistory(res.data.dominant_mood, nodeRes.data.songs, nodeRes.data.videoIds);
@@ -438,6 +439,9 @@ const DashboardPage: React.FC = () => {
                 <PlaylistCard onClick={() => handlePlaylistClick('Bollywood Chartbusters', mockCategories.bollywood)} title="Bollywood Chartbusters" subtitle="Hindi hits and crowd favorites" gradient="from-pink-400 to-rose-500" glow="rgba(244,114,182,0.22)" />
                 <PlaylistCard onClick={() => handlePlaylistClick('Hollywood Chartbusters', mockCategories.hollywood)} title="Hollywood Chartbusters" subtitle="Global pop picks" gradient="from-sky-400 to-blue-500" glow="rgba(56,189,248,0.22)" />
                 <PlaylistCard onClick={() => handlePlaylistClick('Lofi Beats', mockCategories.lofi)} title="Lofi Beats" subtitle="Relax and focus" gradient="from-slate-400 to-neutral-500" glow="rgba(148,163,184,0.18)" />
+                <PlaylistCard onClick={() => handlePlaylistClick('Chill Vibes', mockCategories.chill)} title="Chill Vibes" subtitle="Soft, soothing music" gradient="from-emerald-400 to-teal-500" glow="rgba(52,211,153,0.22)" />
+                <PlaylistCard onClick={() => handlePlaylistClick('Study Focus', mockCategories.focus)} title="Study Focus" subtitle="Concentration and calm" gradient="from-violet-400 to-indigo-500" glow="rgba(129,140,248,0.22)" />
+                <PlaylistCard onClick={() => handlePlaylistClick('Romantic Evening', mockCategories.romantic)} title="Romantic Evening" subtitle="Love ballads and slow melodies" gradient="from-rose-400 to-pink-500" glow="rgba(251,146,255,0.22)" />
               </div>
             </section>
           </div>
