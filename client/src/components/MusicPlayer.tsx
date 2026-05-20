@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Play, BookmarkPlus, BookmarkCheck, X } from 'lucide-react';
+import axios from 'axios';
+import { Play, BookmarkPlus, BookmarkCheck, X, Plus, ListMusic } from 'lucide-react';
 
 interface Song {
   videoId: string;
   title: string;
   artist: string;
+}
+
+interface Playlist {
+  id: number;
+  name: string;
+  songCount: number;
 }
 
 interface MusicPlayerProps {
@@ -15,6 +22,9 @@ interface MusicPlayerProps {
 const MusicPlayer: React.FC<MusicPlayerProps> = ({ videoIds, songs }) => {
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [showPlaylistModal, setShowPlaylistModal] = useState<Song | null>(null);
+  const [userPlaylists, setUserPlaylists] = useState<Playlist[]>([]);
+  const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false);
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('moodify_saved_songs') || '[]');
@@ -25,18 +35,60 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ videoIds, songs }) => {
     ? songs
     : videoIds.map(id => ({ videoId: id, title: 'Bollywood Track', artist: 'Various Artists' }));
 
+  const loadUserPlaylists = async () => {
+    setIsLoadingPlaylists(true);
+    try {
+      const res = await axios.get('http://localhost:5000/api/playlists', { withCredentials: true });
+      setUserPlaylists(res.data.playlists || []);
+    } catch (error) {
+      console.error('Failed to load playlists:', error);
+      setUserPlaylists([]);
+    } finally {
+      setIsLoadingPlaylists(false);
+    }
+  };
+
+  const addToPlaylist = async (playlistId: number, song: Song) => {
+    try {
+      await axios.post(`http://localhost:5000/api/playlists/${playlistId}/add-song`, {
+        videoId: song.videoId,
+        title: song.title,
+        artist: song.artist,
+      }, { withCredentials: true });
+
+      setShowPlaylistModal(null);
+
+      const playlist = userPlaylists.find(p => p.id === playlistId);
+      alert(`Added "${song.title}" to "${playlist?.name}" playlist!`);
+    } catch (error) {
+      console.error('Failed to add song to playlist:', error);
+      alert('Failed to add song to playlist. Please try again.');
+    }
+  };
+
+  const openPlaylistModal = (song: Song) => {
+    setShowPlaylistModal(song);
+    loadUserPlaylists();
+  };
+
   const toggleSave = (song: Song) => {
     const isSaved = savedIds.has(song.videoId);
-    let savedList = JSON.parse(localStorage.getItem('moodify_saved_songs') || '[]');
-    
+    const savedList: Song[] = JSON.parse(localStorage.getItem('moodify_saved_songs') || '[]');
+
+    let nextSavedList: Song[];
     if (isSaved) {
-      savedList = savedList.filter((s: any) => s.videoId !== song.videoId);
-      setSavedIds(prev => { const next = new Set(prev); next.delete(song.videoId); return next; });
+      nextSavedList = savedList.filter((s: Song) => s.videoId !== song.videoId);
+      setSavedIds(prev => {
+        const next = new Set(prev);
+        next.delete(song.videoId);
+        return next;
+      });
     } else {
-      savedList.push(song);
+      nextSavedList = [...savedList, song];
       setSavedIds(prev => new Set([...prev, song.videoId]));
     }
-    localStorage.setItem('moodify_saved_songs', JSON.stringify(savedList));
+
+    localStorage.setItem('moodify_saved_songs', JSON.stringify(nextSavedList));
   };
 
   if (!displayList || displayList.length === 0) {
@@ -77,7 +129,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ videoIds, songs }) => {
                 {isPlaying ? <Play size={16} className="mx-auto text-purple-400 animate-pulse" /> : (index + 1).toString().padStart(2, '0')}
               </div>
               
-              <div className="w-12 h-12 rounded-lg overflow-hidden bg-neutral-800 ml-2 mr-4 flex-shrink-0 relative cursor-pointer" onClick={() => handlePlay(song)}>
+              <div className="w-12 h-12 rounded-lg overflow-hidden bg-neutral-800 ml-2 mr-4 shrink-0 relative cursor-pointer" onClick={() => handlePlay(song)}>
                 <img src={thumbnailUrl} alt={song.title} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                   <Play size={20} className="text-white ml-1" />
@@ -89,7 +141,14 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ videoIds, songs }) => {
                 <p className="text-neutral-400 text-xs truncate">{song.artist}</p>
               </div>
 
-              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-2 transition-colors">
+                <button 
+                  onClick={() => openPlaylistModal(song)}
+                  className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-all"
+                  title="Add to Playlist"
+                >
+                  <Plus size={18} />
+                </button>
                 <button 
                   onClick={() => toggleSave(song)}
                   className={`p-2 rounded-lg transition-colors ${isSaved ? 'text-purple-400 bg-purple-400/10' : 'text-neutral-400 hover:text-white hover:bg-neutral-800'}`}
@@ -120,6 +179,58 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ videoIds, songs }) => {
               allowFullScreen
               className="w-full h-full border-0"
             />
+          </div>
+        </div>
+      )}
+
+      {/* Add to Playlist Modal */}
+      {showPlaylistModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-neutral-900 border border-neutral-700 rounded-3xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-white">Add to Playlist</h2>
+              <button 
+                onClick={() => setShowPlaylistModal(null)}
+                className="p-2 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800 transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="mb-4 p-3 rounded-xl bg-neutral-800 border border-neutral-700">
+              <h3 className="font-semibold text-white text-sm truncate">{showPlaylistModal.title}</h3>
+              <p className="text-neutral-400 text-xs truncate">{showPlaylistModal.artist}</p>
+            </div>
+
+            {isLoadingPlaylists ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+              </div>
+            ) : userPlaylists.length === 0 ? (
+              <div className="text-center py-8">
+                <ListMusic size={24} className="mx-auto text-neutral-600 mb-2" />
+                <p className="text-neutral-500 text-sm">No playlists yet</p>
+                <p className="text-neutral-600 text-xs">Create one in the Library section</p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {userPlaylists.map(playlist => (
+                  <button
+                    key={playlist.id}
+                    onClick={() => addToPlaylist(playlist.id, showPlaylistModal)}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl border border-neutral-700 hover:bg-neutral-800 hover:border-neutral-600 transition-all text-left"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0">
+                      <ListMusic size={16} className="text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-white text-sm truncate">{playlist.name}</h4>
+                      <p className="text-neutral-500 text-xs">{playlist.songCount} tracks</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -67,6 +67,28 @@ async function getDb() {
         FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
       );
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS playlists (
+        id SERIAL PRIMARY KEY,
+        user_email VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
+      );
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS playlist_songs (
+        id SERIAL PRIMARY KEY,
+        playlist_id INTEGER NOT NULL,
+        video_id VARCHAR(255) NOT NULL,
+        title VARCHAR(500) NOT NULL,
+        artist VARCHAR(500) NOT NULL,
+        added_at TIMESTAMP DEFAULT NOW(),
+        FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
+        UNIQUE(playlist_id, video_id)
+      );
+    `);
     console.log("PostgreSQL Database connected and initialized.");
   } catch (err) {
     console.error("Failed to connect to PostgreSQL. Please make sure the 'moodify' database exists and your credentials in .env are correct:", err.message);

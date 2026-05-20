@@ -8,6 +8,7 @@ require('dotenv').config();
 const musicRoutes = require('./routes/musicRoutes');
 const authRoutes = require('./routes/authRoutes');
 const historyRoutes = require('./routes/historyRoutes');
+const playlistRoutes = require('./routes/playlistRoutes');
 
 const port = 5000;
 const useClustering = process.env.USE_CLUSTER === 'true';
@@ -52,6 +53,7 @@ if (useClustering && cluster.isMaster) {
   app.use('/api/music', musicRoutes);
   app.use('/api', authRoutes);
   app.use('/api/history', historyRoutes);
+  app.use('/api/playlists', playlistRoutes);
 
   app.get('/', (req, res) => {
     const modeInfo = useClustering ? `Worker ${process.pid}` : 'Single Process';
