@@ -5,5 +5,6 @@ const { musicAnalyze, musicRefresh } = require('../validators');
 
 router.post('/analyze', musicAnalyze, musicController.generatePlaylist);
 router.post('/refresh', musicRefresh, musicController.refreshPlaylist);
+router.get('/trending', musicController.getTrendingSongs);
 
 module.exports = router;

@@ -42,3 +42,19 @@ exports.refreshPlaylist = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
+
+exports.getTrendingSongs = async (req, res) => {
+  try {
+    const query = String(req.query.query || 'trending songs official audio').trim();
+    const songs = await youtubeService.getVideosForMood(query);
+
+    return res.json({
+      query,
+      songs,
+      videoIds: songs.map(s => s.videoId),
+    });
+  } catch (error) {
+    console.error('[Trending] Error:', error.message);
+    return res.status(500).json({ error: error.message });
+  }
+};

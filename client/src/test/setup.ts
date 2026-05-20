@@ -7,10 +7,15 @@ class MockMediaStream {
   }
 }
 
+const existingNavigator = typeof globalThis.navigator !== 'undefined'
+  ? globalThis.navigator
+  : { userAgent: 'node.js' };
+
 Object.defineProperty(globalThis, 'navigator', {
   writable: true,
   value: {
-    ...globalThis.navigator,
+    ...existingNavigator,
+    userAgent: existingNavigator.userAgent || 'node.js',
     mediaDevices: {
       getUserMedia: vi.fn().mockResolvedValue(new MockMediaStream())
     }

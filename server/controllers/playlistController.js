@@ -82,6 +82,10 @@ exports.addSongToPlaylist = async (req, res) => {
     const { playlistId, videoId, title, artist } = req.validated;
     const userEmail = req.user.email;
 
+    if (!playlistId || !videoId || !title || !artist) {
+      return res.status(400).json({ error: 'videoId, title, and artist are required' });
+    }
+
     const playlistCheck = await pool.query(`
       SELECT id FROM playlists WHERE id = $1 AND user_email = $2
     `, [playlistId, userEmail]);

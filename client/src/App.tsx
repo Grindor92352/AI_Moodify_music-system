@@ -7,6 +7,7 @@ import LandingPage from './pages/LandingPage';
 import SigninPage from './pages/SigninPage';
 import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
+import TrendingPage from './pages/TrendingPage';
 import ResultsPage from './pages/ResultsPage';
 import HistoryPage from './pages/HistoryPage';
 import LibraryPage from './pages/LibraryPage';
@@ -41,6 +42,7 @@ function App() {
           
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/trending" element={<TrendingPage />} />
             <Route path="/profile" element={<Navigate to="/dashboard" replace />} />
             <Route path="/results" element={<ResultsPage />} />
             <Route path="/history" element={<HistoryPage />} />

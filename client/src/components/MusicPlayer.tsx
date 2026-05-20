@@ -16,6 +16,7 @@ interface MusicPlayerProps {
 
 const MusicPlayer: React.FC<MusicPlayerProps> = ({ videoIds, songs }) => {
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
+  const [previewVideoId, setPreviewVideoId] = useState<string | null>(null);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [showPlaylistModal, setShowPlaylistModal] = useState<Song | null>(null);
   const [userPlaylists, setUserPlaylists] = useState<Playlist[]>([]);
@@ -107,6 +108,10 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ videoIds, songs }) => {
     }
   };
 
+  const handlePreview = (song: Song) => {
+    setPreviewVideoId(song.videoId);
+  };
+
   return (
     <div className="w-full">
       <div className="flex flex-col gap-2">
@@ -145,6 +150,13 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ videoIds, songs }) => {
                   <Plus size={18} />
                 </button>
                 <button 
+                  onClick={() => handlePreview(song)}
+                  className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-all"
+                  title="Preview"
+                >
+                  <Play size={18} />
+                </button>
+                <button 
                   onClick={() => toggleSave(song)}
                   className={`p-2 rounded-lg transition-colors ${isSaved ? 'text-purple-400 bg-purple-400/10' : 'text-neutral-400 hover:text-white hover:bg-neutral-800'}`}
                   title="Save to Library"
@@ -156,6 +168,33 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ videoIds, songs }) => {
           );
         })}
       </div>
+
+      {previewVideoId && (
+        <div className="mt-5 rounded-3xl border border-white/[0.08] bg-neutral-950 p-4">
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">Preview</p>
+              <h3 className="text-lg font-semibold text-white truncate">
+                {displayList.find((song) => song.videoId === previewVideoId)?.title || 'Preview'}
+              </h3>
+            </div>
+            <button
+              onClick={() => setPreviewVideoId(null)}
+              className="rounded-xl border border-white/[0.08] px-3 py-2 text-sm text-neutral-300 hover:bg-white/[0.05] hover:text-white transition-all"
+            >
+              Close
+            </button>
+          </div>
+          <div className="aspect-video overflow-hidden rounded-2xl bg-black">
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${previewVideoId}?autoplay=1&controls=1&modestbranding=1`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full border-0"
+            />
+          </div>
+        </div>
+      )}
 
       {activeVideoId && (
         <div className="fixed bottom-6 right-6 w-80 bg-neutral-900 border border-neutral-700 p-3 rounded-2xl shadow-2xl z-50 animate-in slide-in-from-bottom-5">

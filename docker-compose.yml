@@ -1,3 +1,5 @@
+version: '2.4'
+
 services:
   # 🌐 React Frontend (Serves production build on http://localhost:3000)
   frontend:

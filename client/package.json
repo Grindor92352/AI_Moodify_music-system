@@ -14,7 +14,6 @@
   "dependencies": {
     "@tailwindcss/postcss": "^4.2.2",
     "@tailwindcss/vite": "^4.2.2",
-    "ai_moodify_music-system": "file:..",
     "autoprefixer": "^10.5.0",
     "axios": "^1.15.0",
     "lucide-react": "^1.16.0",

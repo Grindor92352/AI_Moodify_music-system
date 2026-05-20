@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import Sidebar from '../components/Sidebar';
@@ -99,6 +99,10 @@ const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [moodText, setMoodText] = useState('');
+  const [detectedMood, setDetectedMood] = useState<string | null>(null);
+  const [savedCount, setSavedCount] = useState(0);
+  const [savedSongs, setSavedSongs] = useState<Song[]>([]);
+  const [previewVideoId, setPreviewVideoId] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [isFetchingPlaylist, setIsFetchingPlaylist] = useState(false);
   const { user } = useAuth();
@@ -154,21 +158,12 @@ const DashboardPage: React.FC = () => {
 
       if (res.data.error) throw new Error(res.data.error);
 
-      stopCamera();
-
       const mood = res.data.dominant_mood || res.data.mood || 'Happiness';
-      const nodeRes = await api.post<MusicRefreshResponse>('/api/music/refresh', { mood });
-
-      await saveHistory(mood, nodeRes.data.songs);
-
-      navigate('/results', { 
-        state: { 
-          mood, 
-          image: base64Image,
-          songs: nodeRes.data.songs,
-          videoIds: nodeRes.data.videoIds
-        } 
-      });
+      setDetectedMood(mood);
+      setMoodText(mood);
+      stopCamera();
+      setLoading(false);
+      return;
 
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, 'Analysis failed'));
@@ -294,7 +289,36 @@ const DashboardPage: React.FC = () => {
 
   const selectQuickMood = (mood: string) => {
     setMoodText(mood);
+    setDetectedMood(null);
     setError('');
+  };
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem('moodify_saved_songs') || '[]');
+    if (Array.isArray(saved)) {
+      setSavedSongs(saved);
+      setSavedCount(saved.length);
+    }
+  }, []);
+
+  const openLibrary = () => {
+    navigate('/library');
+  };
+
+  const previewSavedSong = (song: Song) => {
+    setPreviewVideoId(song.videoId);
+  };
+
+  const playSavedSongs = () => {
+    if (!savedSongs.length) return;
+    navigate('/results', {
+      state: {
+        mood: 'Favorites',
+        image: null,
+        songs: savedSongs.slice(0, 20),
+        videoIds: savedSongs.map(song => song.videoId)
+      }
+    });
   };
 
   return (
@@ -318,6 +342,11 @@ const DashboardPage: React.FC = () => {
               <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400 lg:text-base">
                 Check your mood, describe what you need, or open a playlist. Everything here should move you toward music, not clutter the page.
               </p>
+              {savedCount > 0 && (
+                <p className="mt-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-200">
+                  You have <span className="font-semibold text-white">{savedCount} favorite song{savedCount === 1 ? '' : 's'}</span> saved in your library.
+                </p>
+              )}
             </div>
             <button
               onClick={() => document.getElementById('mood-input')?.focus()}
@@ -398,7 +427,10 @@ const DashboardPage: React.FC = () => {
                     <textarea
                       id="mood-input"
                       value={moodText}
-                      onChange={e => setMoodText(e.target.value)}
+                      onChange={e => {
+                        setMoodText(e.target.value);
+                        if (detectedMood) setDetectedMood(null);
+                      }}
                       onKeyDown={e => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
@@ -408,6 +440,31 @@ const DashboardPage: React.FC = () => {
                       placeholder="I feel calm but tired..."
                       className="mt-3 min-h-24 w-full resize-none rounded-xl border border-white/[0.08] bg-black/40 px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-neutral-600 focus:border-emerald-400/50"
                     />
+
+                  {detectedMood && (
+                    <div className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm text-emerald-100">
+                      <p className="text-xs uppercase tracking-[0.2em] text-emerald-300">Detected mood</p>
+                      <p className="mt-2 text-lg font-semibold text-white">{detectedMood}</p>
+                      <p className="mt-1 text-neutral-300">
+                        We detected this mood from your camera. You can edit it before creating a playlist.
+                      </p>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <button
+                          onClick={handleTextAnalysis}
+                          disabled={!moodText.trim() || loading}
+                          className="rounded-xl bg-emerald-400 px-4 py-2 text-sm font-semibold text-black transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Use this mood
+                        </button>
+                        <button
+                          onClick={() => setDetectedMood(null)}
+                          className="rounded-xl border border-white/[0.12] bg-white/[0.04] px-4 py-2 text-sm text-white transition hover:bg-white/[0.08]"
+                        >
+                          Edit mood manually
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 sm:max-w-md">
@@ -462,10 +519,95 @@ const DashboardPage: React.FC = () => {
                 <PlaylistCard onClick={() => handlePlaylistClick('Study Focus', mockCategories.focus)} title="Study Focus" subtitle="Concentration and calm" gradient="from-violet-400 to-indigo-500" glow="rgba(129,140,248,0.22)" />
                 <PlaylistCard onClick={() => handlePlaylistClick('Romantic Evening', mockCategories.romantic)} title="Romantic Evening" subtitle="Love ballads and slow melodies" gradient="from-rose-400 to-pink-500" glow="rgba(251,146,255,0.22)" />
               </div>
+
+              <div className="mt-6 rounded-3xl border border-white/[0.08] bg-neutral-900/60 p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">Favorites</p>
+                    <h3 className="mt-2 text-lg font-semibold text-white">Saved song library</h3>
+                    <p className="mt-1 text-sm text-neutral-400">Quick access to the songs you’ve marked as favorites.</p>
+                  </div>
+                  <button
+                    onClick={openLibrary}
+                    className="rounded-xl border border-white/[0.08] bg-white/5 px-4 py-2 text-sm text-white transition hover:bg-white/[0.08]"
+                  >
+                    Open Library
+                  </button>
+                </div>
+                {savedSongs.length > 0 ? (
+                  <>
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <button
+                        onClick={playSavedSongs}
+                        className="rounded-xl bg-emerald-400 px-4 py-2 text-sm font-semibold text-black transition hover:bg-emerald-300"
+                      >
+                        Play favorites
+                      </button>
+                      <button
+                        onClick={openLibrary}
+                        className="rounded-xl border border-white/[0.08] bg-white/5 px-4 py-2 text-sm text-white transition hover:bg-white/[0.08]"
+                      >
+                        Open Library
+                      </button>
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      {savedSongs.slice(0, 3).map(song => (
+                        <div key={song.videoId} className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-black/50 p-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-white truncate">{song.title}</p>
+                            <p className="text-xs text-neutral-500 truncate">{song.artist}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => previewSavedSong(song)}
+                              className="rounded-full border border-white/[0.08] bg-white/5 p-2 text-neutral-300 transition hover:bg-white/[0.08] hover:text-white"
+                            >
+                              Preview
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="mt-4 rounded-2xl border border-white/[0.06] bg-black/40 p-4 text-sm text-neutral-500">
+                    No favorite songs yet. Save any song from a playlist to see it here instantly.
+                  </div>
+                )}
+
+                {previewVideoId && (
+                  <div className="mt-5 rounded-3xl border border-white/[0.08] bg-neutral-950 p-4">
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">Favorite preview</p>
+                        <h3 className="mt-2 text-lg font-semibold text-white">
+                          {savedSongs.find((song) => song.videoId === previewVideoId)?.title || 'Preview'}
+                        </h3>
+                      </div>
+                      <button
+                        onClick={() => setPreviewVideoId(null)}
+                        className="rounded-xl border border-white/[0.08] px-3 py-2 text-sm text-neutral-300 hover:bg-white/[0.05] hover:text-white transition-all"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <div className="aspect-video overflow-hidden rounded-2xl bg-black">
+                      <iframe
+                        src={`https://www.youtube-nocookie.com/embed/${previewVideoId}?autoplay=1&controls=1&modestbranding=1`}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="w-full h-full border-0"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </section>
           </div>
+
         </div>
       </main>
+
     </div>
   );
 };

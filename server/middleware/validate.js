@@ -200,7 +200,8 @@ function validate(schema) {
     }
 
     if (errors.length > 0) {
-      return res.status(400).json({ error: 'Validation failed', details: errors });
+      const message = errors.length === 1 ? errors[0].message : 'Validation failed';
+      return res.status(400).json({ error: message, details: errors });
     }
 
     req.validated = { ...req.validated, ...validated };

@@ -70,10 +70,11 @@ describe('API integration (minimal routes)', () => {
         .send({ image: 'data:image/jpeg;base64,YWJjZGVm' });
 
       expect(res.status).toBe(200);
-      expect(moodService.getMoodFromImage).toHaveBeenCalledWith('data:image/jpeg;base64,abc');
+      expect(moodService.getMoodFromImage).toHaveBeenCalledWith('data:image/jpeg;base64,YWJjZGVm');
       expect(youtubeService.getVideosForMood).toHaveBeenCalledWith('Happiness');
       expect(res.body).toEqual({
         mood: 'Happiness',
+        dominant_mood: 'Happiness',
         songs: mockSongs,
         videoIds: ['a', 'b', 'c', 'd']
       });

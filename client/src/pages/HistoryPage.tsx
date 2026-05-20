@@ -43,6 +43,16 @@ const HistoryPage: React.FC = () => {
     setHistory([]);
   };
 
+  const totalSessions = history.length;
+  const totalTracks = history.reduce((sum, session) => sum + (session.tracks || 0), 0);
+  const moodCounts = history.reduce<Record<string, number>>((acc, session) => {
+    acc[session.mood] = (acc[session.mood] || 0) + 1;
+    return acc;
+  }, {});
+  const sortedMoodCounts = Object.entries(moodCounts).sort((a, b) => b[1] - a[1]);
+  const topMood = sortedMoodCounts[0]?.[0] || 'Your most common mood will appear here';
+  const recentMood = history[0]?.mood || 'No recent mood yet';
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#050505] text-white">
       <Sidebar />
@@ -66,6 +76,58 @@ const HistoryPage: React.FC = () => {
               </button>
             )}
           </div>
+
+          {!loading && history.length > 0 && (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-8">
+              <div className="rounded-3xl border border-white/[0.08] bg-neutral-950 p-5">
+                <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">Recent mood</p>
+                <p className="mt-3 text-2xl font-bold text-white">{recentMood}</p>
+                <p className="mt-2 text-sm text-neutral-400">What you felt in your latest saved session.</p>
+              </div>
+              <div className="rounded-3xl border border-white/[0.08] bg-neutral-950 p-5">
+                <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">Most played mood</p>
+                <p className="mt-3 text-2xl font-bold text-white">{topMood}</p>
+                <p className="mt-2 text-sm text-neutral-400">The mood you choose most often.</p>
+              </div>
+              <div className="rounded-3xl border border-white/[0.08] bg-neutral-950 p-5">
+                <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">Sessions</p>
+                <p className="mt-3 text-2xl font-bold text-white">{totalSessions}</p>
+                <p className="mt-2 text-sm text-neutral-400">Total mood sessions tracked.</p>
+              </div>
+              <div className="rounded-3xl border border-white/[0.08] bg-neutral-950 p-5">
+                <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">Total tracks</p>
+                <p className="mt-3 text-2xl font-bold text-white">{totalTracks}</p>
+                <p className="mt-2 text-sm text-neutral-400">Songs saved across all sessions.</p>
+              </div>
+            </div>
+          )}
+
+          {!loading && history.length > 0 && (
+            <div className="rounded-3xl border border-white/[0.08] bg-neutral-950 p-5 mb-10">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">Mood distribution</p>
+                  <h2 className="text-lg font-semibold text-white">Track how your moods change over time</h2>
+                </div>
+              </div>
+              <div className="mt-5 space-y-3">
+                {sortedMoodCounts.map(([mood, count]) => {
+                  const width = totalSessions ? Math.max(10, Math.min(100, (count / totalSessions) * 100)) : 0;
+                  return (
+                    <div key={mood} className="space-y-2">
+                      <div className="flex items-center justify-between text-sm text-neutral-300">
+                        <span>{mood}</span>
+                        <span>{count} session{count === 1 ? '' : 's'}</span>
+                      </div>
+                      <div className="h-3 rounded-full bg-white/[0.05] overflow-hidden">
+                        <div className="h-full rounded-full bg-emerald-400" style={{ width: `${width}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Loading */}
           {loading && (

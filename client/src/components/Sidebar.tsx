@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, History, Library, LogOut, Music2 } from 'lucide-react';
+import { LayoutDashboard, History, Library, LogOut, Music2, TrendingUp } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 const navItems = [
@@ -10,6 +10,13 @@ const navItems = [
     icon: <LayoutDashboard size={18} />,
     gradient: 'from-violet-500 to-purple-600',
     glow: 'rgba(139,92,246,0.4)',
+  },
+  {
+    name: 'Search',
+    path: '/trending',
+    icon: <TrendingUp size={18} />,
+    gradient: 'from-emerald-400 to-lime-500',
+    glow: 'rgba(132,204,22,0.4)',
   },
   {
     name: 'History',
