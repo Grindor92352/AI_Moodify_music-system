@@ -4,13 +4,13 @@ const { getDb } = require('../database');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'moodify_super_secret_key_123';
 
-const generateCookie = (res, email) => {
-  const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: '7d' });
+const generateCookie = (res, email, name) => {
+  const token = jwt.sign({ email, name: name || null }, JWT_SECRET, { expiresIn: '7d' });
   res.cookie('jwt_token', token, {
     httpOnly: true,
-    secure: false, // set true if using https in production
+    secure: false,
     sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    maxAge: 7 * 24 * 60 * 60 * 1000
   });
 };
 
@@ -34,7 +34,7 @@ exports.signup = async (req, res) => {
       [email, hashedPassword, name || null, age || null, singersStr || null]
     );
     
-    generateCookie(res, email);
+    generateCookie(res, email, name);
     res.status(201).json({ message: 'User created successfully' });
   } catch (err) {
     console.error('Signup error:', err);
@@ -61,7 +61,7 @@ exports.login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    generateCookie(res, email);
+    generateCookie(res, email, user.name || null);
     res.status(200).json({ message: 'Logged in successfully' });
   } catch (err) {
     console.error(err);

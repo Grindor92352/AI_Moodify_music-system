@@ -99,6 +99,8 @@ const ProfilePage: React.FC = () => {
   }, []);
 
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : user?.email ? user.email.charAt(0).toUpperCase() : 'U';
+  const displayName = user?.name || (user?.email ? user.email.split('@')[0] : 'there');
+  const firstName = displayName.split(' ')[0]; // Just first name for greeting
 
   const startCamera = async () => {
     setError('');
@@ -318,8 +320,9 @@ const ProfilePage: React.FC = () => {
       <main className="flex-1 p-10 flex flex-col items-center custom-scrollbar overflow-y-auto relative z-10 transition-transform duration-500 ease-out" style={{ transform: `translate(${mousePos.x * 10}px, ${mousePos.y * 10}px)` }}>
         <header className="w-full max-w-5xl mb-10 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-extrabold mb-2">Your Profile</h1>
-            <p className="text-neutral-400 text-lg">Let's tune into your emotions today.</p>
+            <p className="text-xs font-bold tracking-[0.2em] text-indigo-400 uppercase mb-2">Dashboard</p>
+            <h1 className="text-4xl font-extrabold mb-1">Hello, {firstName} 👋</h1>
+            <p className="text-neutral-500 text-base">Let's tune into your emotions today.</p>
           </div>
           <div className="relative group">
             <div className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center text-lg font-bold shadow-lg cursor-pointer">
@@ -419,17 +422,17 @@ const ProfilePage: React.FC = () => {
           </div>
 
           {/* Quick Playlists Area */}
-          <div className="flex flex-col gap-6 animate-fade-in-up">
-            <h2 className="text-xl font-bold">Your Playlists</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-5 animate-fade-in-up">
+            <p className="text-xs font-bold tracking-[0.2em] text-indigo-400 uppercase">Your Playlists</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {user?.preferredSingers && user.preferredSingers.length > 0 && (
-                <PlaylistCard onClick={() => handlePlaylistClick('Your Favorites', mockCategories.explore)} title="Your Favorites" subtitle="Based on your top artists" color="bg-neutral-800" className="md:col-span-2" />
+                <PlaylistCard onClick={() => handlePlaylistClick('Your Favorites', mockCategories.explore)} title="Your Favorites" subtitle="Based on your top artists" gradient="from-yellow-500 to-orange-500" glow="rgba(234,179,8,0.35)" span2 />
               )}
-              <PlaylistCard onClick={() => handlePlaylistClick('Recently Listened')} title="Recently Listened" subtitle="Continue your journey" color="bg-neutral-800" />
-              <PlaylistCard onClick={() => handlePlaylistClick('Explore New', mockCategories.explore)} title="Explore New" subtitle="Discover fresh tracks" color="bg-neutral-800" />
-              <PlaylistCard onClick={() => handlePlaylistClick('Bollywood Chartbusters', mockCategories.bollywood)} title="Bollywood Chartbusters" subtitle="Top trending hits" color="bg-neutral-800" />
-              <PlaylistCard onClick={() => handlePlaylistClick('Hollywood Chartbusters', mockCategories.hollywood)} title="Hollywood Chartbusters" subtitle="Global top 50" color="bg-neutral-800" />
-              <PlaylistCard onClick={() => handlePlaylistClick('Lofi Beats', mockCategories.lofi)} title="Lofi Beats" subtitle="Relax and focus" color="bg-neutral-800" className="md:col-span-2" />
+              <PlaylistCard onClick={() => handlePlaylistClick('Recently Listened')} title="Recently Listened" subtitle="Continue your journey" gradient="from-indigo-500 to-violet-600" glow="rgba(99,102,241,0.35)" />
+              <PlaylistCard onClick={() => handlePlaylistClick('Explore New', mockCategories.explore)} title="Explore New" subtitle="Discover fresh tracks" gradient="from-emerald-500 to-teal-600" glow="rgba(16,185,129,0.35)" />
+              <PlaylistCard onClick={() => handlePlaylistClick('Bollywood Chartbusters', mockCategories.bollywood)} title="Bollywood Chartbusters" subtitle="Top trending hits" gradient="from-pink-500 to-rose-600" glow="rgba(236,72,153,0.35)" />
+              <PlaylistCard onClick={() => handlePlaylistClick('Hollywood Chartbusters', mockCategories.hollywood)} title="Hollywood Chartbusters" subtitle="Global top 50" gradient="from-blue-500 to-cyan-500" glow="rgba(59,130,246,0.35)" />
+              <PlaylistCard onClick={() => handlePlaylistClick('Lofi Beats', mockCategories.lofi)} title="Lofi Beats" subtitle="Relax and focus" gradient="from-slate-500 to-neutral-600" glow="rgba(100,116,139,0.35)" span2 />
             </div>
           </div>
         </div>
@@ -449,14 +452,36 @@ const ProfilePage: React.FC = () => {
   );
 };
 
-const PlaylistCard = ({ title, subtitle, color, className = '', onClick }: { title: string, subtitle: string, color: string, className?: string, onClick?: () => void }) => (
-  <div onClick={onClick} className={`p-5 rounded-2xl border border-neutral-800 bg-[#0a0a0a] hover:bg-neutral-900 hover:border-neutral-700 transition-all cursor-pointer relative overflow-hidden group ${className}`}>
-    <h3 className="text-white font-bold text-lg relative z-10">{title}</h3>
-    <p className="text-neutral-400 text-sm mt-1 relative z-10">{subtitle}</p>
-    <div className="mt-4 w-10 h-10 rounded-full border border-neutral-700 flex items-center justify-center text-white relative z-10 group-hover:bg-white group-hover:text-black group-hover:border-white transition-colors">
-      <PlayCircle size={20} />
+const PlaylistCard = ({ title, subtitle, gradient, glow, onClick, span2 = false }: {
+  title: string; subtitle: string; gradient: string; glow: string;
+  onClick?: () => void; span2?: boolean;
+}) => {
+  const [hov, setHov] = React.useState(false);
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      className={`relative p-5 rounded-2xl border cursor-pointer overflow-hidden transition-all duration-300 ${span2 ? 'md:col-span-2' : ''}`}
+      style={{
+        borderColor: hov ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)',
+        background: hov ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.02)',
+        boxShadow: hov ? `0 6px 30px ${glow}` : 'none',
+        transform: hov ? 'translateY(-2px)' : 'none',
+      }}
+    >
+      {/* Left accent bar */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-gradient-to-b ${gradient}`} style={{ opacity: hov ? 1 : 0.4 }} />
+      <div className="pl-3">
+        <h3 className="text-white font-bold text-base">{title}</h3>
+        <p className="text-neutral-500 text-xs mt-1">{subtitle}</p>
+        <div className={`mt-4 w-9 h-9 rounded-xl flex items-center justify-center text-white bg-gradient-to-br ${gradient} transition-all duration-300`}
+          style={{ boxShadow: hov ? `0 4px 15px ${glow}` : 'none' }}>
+          <PlayCircle size={17} />
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default ProfilePage;
