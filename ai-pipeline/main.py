@@ -1,14 +1,17 @@
 from contextlib import asynccontextmanager
 import os
+os.environ.setdefault("MEDIAPIPE_DISABLE_GPU", "1")
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
 import json
 import base64
 import hashlib
 import traceback
 from collections import OrderedDict
 
+import h5py
 import anyio
 import cv2
-import mediapipe as mp
+from mediapipe.python.solutions.face_detection import FaceDetection
 import numpy as np
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +20,8 @@ from tensorflow.keras.models import model_from_json
 
 WEIGHTS_PATH = os.environ.get("MODEL_WEIGHTS_PATH", "model.weights.h5")
 ARCH_PATH = os.environ.get("MODEL_ARCH_PATH", "model_arch.json")
+
+os.environ["MEDIAPIPE_DISABLE_GPU"] = "1"
 
 MODEL_READY = False
 model = None
@@ -48,14 +53,71 @@ def clean_keras_config(config_dict):
     if "layers" in config_dict:
         for layer in config_dict["layers"]:
             if "config" in layer:
+                if layer.get("class_name") == "InputLayer":
+                    if "batch_shape" in layer["config"]:
+                        layer["config"]["batch_input_shape"] = layer["config"].pop("batch_shape")
+                    layer["config"].pop("optional", None)
+                if layer.get("class_name") == "Conv2D":
+                    layer_name = layer["config"].get("name", "")
+                    if layer_name == "conv2d_3":
+                        layer["config"]["name"] = "conv2d"
+                    elif layer_name == "conv2d_4":
+                        layer["config"]["name"] = "conv2d_1"
+                    elif layer_name == "conv2d_5":
+                        layer["config"]["name"] = "conv2d_2"
+                elif layer.get("class_name") == "Dense":
+                    layer_name = layer["config"].get("name", "")
+                    if layer_name == "dense_2":
+                        layer["config"]["name"] = "dense"
+                    elif layer_name == "dense_3":
+                        layer["config"]["name"] = "dense_1"
                 layer["config"].pop("quantization_config", None)
-    for key, value in config_dict.items():
+                clean_keras_config(layer["config"])
+            if "build_config" in layer:
+                clean_keras_config(layer["build_config"])
+    for key, value in list(config_dict.items()):
+        if key == "dtype" and isinstance(value, dict):
+            dtype_name = None
+            if value.get("class_name") == "DTypePolicy" and isinstance(value.get("config"), dict):
+                dtype_name = value["config"].get("name")
+            if dtype_name:
+                config_dict[key] = dtype_name
+                continue
         if isinstance(value, dict):
             clean_keras_config(value)
         elif isinstance(value, list):
             for item in value:
                 if isinstance(item, dict):
                     clean_keras_config(item)
+
+
+def _load_weights_from_custom_h5(model, weights_path):
+    with h5py.File(weights_path, "r") as f:
+        if "layers" not in f:
+            raise ValueError("Custom HDF5 weights file missing 'layers' group")
+        layer_groups = f["layers"]
+        name_map = {}
+        for layer_name, grp in layer_groups.items():
+            name_map[layer_name] = grp
+            if "vars" in grp and "name" in grp["vars"].attrs:
+                alias = grp["vars"].attrs["name"]
+                name_map[alias] = grp
+
+        for layer in model.layers:
+            grp = name_map.get(layer.name)
+            if grp is None or "vars" not in grp:
+                continue
+            vars_group = grp["vars"]
+            weight_keys = sorted((k for k in vars_group.keys() if k.isdigit()), key=int)
+            weights = [np.array(vars_group[key]) for key in weight_keys]
+            if not weights:
+                continue
+            if len(weights) != len(layer.weights):
+                raise ValueError(
+                    f"Weight count mismatch for layer '{layer.name}': "
+                    f"expected {len(layer.weights)}, found {len(weights)}"
+                )
+            layer.set_weights(weights)
 
 
 def _load_cnn_model():
@@ -76,7 +138,11 @@ def _load_cnn_model():
             "Using fallback mood heuristics until weights are available."
         )
         return
-    model.load_weights(WEIGHTS_PATH)
+    try:
+        model.load_weights(WEIGHTS_PATH)
+    except Exception:
+        print("[AI Pipeline] INFO: Falling back to custom HDF5 weight loader.")
+        _load_weights_from_custom_h5(model, WEIGHTS_PATH)
     MODEL_READY = True
     print("[AI Pipeline] CNN model and weights loaded.")
 
@@ -87,8 +153,7 @@ async def lifespan(app: FastAPI):
     limiter = anyio.to_thread.current_default_thread_limiter()
     limiter.total_tokens = 100
     _load_cnn_model()
-    mp_face_detection = mp.solutions.face_detection
-    face_detector = mp_face_detection.FaceDetection(
+    face_detector = FaceDetection(
         model_selection=1, min_detection_confidence=0.55
     )
     yield
